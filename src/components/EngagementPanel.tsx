@@ -79,11 +79,19 @@ type EngagementComment = {
   id: string;
   business_id: string;
   business_name: string;
+  member_name?: string | null;
   body: string;
   created_at: string;
   updated_at: string;
   is_own?: boolean;
 };
+
+function commentAuthorLabel(comment: EngagementComment): string {
+  if (comment.member_name) {
+    return `${comment.member_name} (${comment.business_name})`;
+  }
+  return comment.is_own ? "You" : comment.business_name;
+}
 
 function formatRelativeTime(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -452,7 +460,7 @@ export function EngagementPanel({
                 <li key={comment.id} className="report-comment">
                   <div className="report-comment-header">
                     <span className="report-comment-author">
-                      {comment.is_own ? "You" : comment.business_name}
+                      {commentAuthorLabel(comment)}
                     </span>
                     <span className="report-comment-time">
                       {formatRelativeTime(comment.created_at)}

@@ -2876,3 +2876,241 @@ textarea.input-field {
 .admin-btn-danger {
   color: #b42318;
 }
+
+/* Team members (profile page) */
+.team-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy-900);
+}
+
+.team-member-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.team-member-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--grey-200);
+  border-radius: var(--radius-md);
+  background: var(--grey-50);
+}
+
+.team-member-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--blue-100);
+  color: var(--navy-800);
+  flex-shrink: 0;
+}
+
+.team-member-avatar svg {
+  width: 16px;
+  height: 16px;
+}
+
+.team-member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.team-member-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--grey-950);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-member-business {
+  font-weight: 500;
+  color: var(--grey-500);
+}
+
+.team-member-phone {
+  font-size: 13px;
+  color: var(--grey-600);
+}
+
+.team-member-remove {
+  flex-shrink: 0;
+  color: var(--coral-600);
+}
+
+.team-add-form {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--grey-200);
+}
+
+.team-add-fields {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .team-add-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* SMS notification preferences (profile page) */
+.notify-group {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--grey-200);
+  border-radius: var(--radius-md);
+}
+
+.notify-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.notify-group-legend {
+  margin-bottom: 0;
+}
+
+.notify-group-toggle-all {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy-800);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.notify-group-toggle-all:disabled {
+  color: var(--grey-400);
+  cursor: default;
+}
+
+.notify-options {
+  display: grid;
+  gap: 6px;
+}
+
+@media (min-width: 480px) {
+  .notify-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.notify-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 14px;
+  color: var(--grey-950);
+  cursor: pointer;
+}
+
+.notify-option input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--navy-800);
+}
+
+/* Mobile bottom tab bar (signed-in users only) */
+.mobile-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  background: var(--white);
+  border-top: 1px solid var(--grey-200);
+  box-shadow: 0 -4px 16px rgba(11, 53, 88, 0.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (min-width: 768px) {
+  .mobile-tab-bar {
+    display: none;
+  }
+}
+
+/* Keep page content and footer clear of the fixed tab bar on mobile. */
+@media (max-width: 767.98px) {
+  body:has(.mobile-tab-bar) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+.mobile-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  min-height: 60px;
+  padding: 8px 4px;
+  color: var(--grey-600);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-tab-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-tab-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mobile-tab--active {
+  color: var(--navy-800);
+}
+
+.mobile-tab--primary {
+  color: var(--navy-800);
+}
+
+.mobile-tab-primary-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-top: -18px;
+  border-radius: 50%;
+  background: var(--coral-600, #e75b45);
+  color: var(--white);
+  box-shadow: 0 4px 12px rgba(231, 91, 69, 0.4);
+  border: 3px solid var(--white);
+}
+
+.mobile-tab-primary-circle svg {
+  width: 16px;
+  height: 16px;
+}

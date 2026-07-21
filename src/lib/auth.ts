@@ -1,5 +1,6 @@
 const SESSION_COOKIE = "bizwatch_session";
 const SESSION_DAYS = 14;
+const OTP_MINUTES = 10;
 
 export function sessionCookieOptions(maxAgeSeconds: number) {
   return {
@@ -36,8 +37,14 @@ export function generateId(prefix: string): string {
 }
 
 export function generateOtp(): string {
-  const num = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
-  return num.toString().padStart(6, "0");
+  // Rejection sampling: avoid modulo bias from 2^32 not being a multiple of 10^6.
+  const buf = new Uint32Array(1);
+  let value: number;
+  do {
+    crypto.getRandomValues(buf);
+    value = buf[0];
+  } while (value >= 4_294_000_000);
+  return (value % 1_000_000).toString().padStart(6, "0");
 }
 
 export function generateSessionToken(): string {
@@ -47,14 +54,23 @@ export function generateSessionToken(): string {
     .join("");
 }
 
+/**
+ * SQLite `datetime('now')` produces "YYYY-MM-DD HH:MM:SS" (UTC). Expiry values
+ * are compared lexicographically against it, so they must use the same format —
+ * ISO strings (with a "T" separator) compare incorrectly.
+ */
+function toSqliteUtc(date: Date): string {
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+
 export function sessionExpiry(): string {
   const date = new Date();
   date.setDate(date.getDate() + SESSION_DAYS);
-  return date.toISOString();
+  return toSqliteUtc(date);
 }
 
 export function otpExpiry(): string {
   const date = new Date();
-  date.setMinutes(date.getMinutes() + 10);
-  return date.toISOString();
+  date.setMinutes(date.getMinutes() + OTP_MINUTES);
+  return toSqliteUtc(date);
 }

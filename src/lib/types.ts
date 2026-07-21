@@ -71,6 +71,12 @@ export type Business = {
   created_at: string;
 };
 
+/** A signed-in account: the business plus, when signed in via a team member's phone, that member. */
+export type SessionBusiness = Business & {
+  member_id?: string | null;
+  member_name?: string | null;
+};
+
 export type BusinessContact = {
   id: string;
   business_name: string;
@@ -137,6 +143,7 @@ export type ReportComment = {
   crime_id: string;
   business_id: string;
   business_name: string;
+  member_name?: string | null;
   body: string;
   created_at: string;
   updated_at: string;
@@ -148,6 +155,7 @@ export type ArticleComment = {
   article_id: string;
   business_id: string;
   business_name: string;
+  member_name?: string | null;
   body: string;
   created_at: string;
   updated_at: string;

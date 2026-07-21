@@ -3,6 +3,29 @@ import { generateId } from "@/lib/auth";
 import { normalizePhone } from "@/lib/phone";
 import type { Business, BusinessContact } from "@/lib/types";
 
+export function validateBusinessFields(input: {
+  businessName: string;
+  email: string;
+  suburb?: string;
+}): string | null {
+  if (!input.businessName.trim()) {
+    return "Business name is required.";
+  }
+  if (input.businessName.length > 200) {
+    return "Business name is too long (max 200 characters).";
+  }
+  if (!input.email.trim() || !input.email.includes("@")) {
+    return "Enter a valid email address.";
+  }
+  if (input.email.length > 320) {
+    return "Email address is too long.";
+  }
+  if ((input.suburb?.length ?? 0) > 100) {
+    return "Suburb is too long.";
+  }
+  return null;
+}
+
 export async function getBusinessByPhone(phone: string): Promise<Business | null> {
   const db = await getDb();
   return db
@@ -32,12 +55,9 @@ export async function registerBusiness(input: {
     return { ok: false, error: "Enter a valid Australian mobile number." };
   }
 
-  if (!input.businessName.trim()) {
-    return { ok: false, error: "Business name is required." };
-  }
-
-  if (!input.email.trim() || !input.email.includes("@")) {
-    return { ok: false, error: "Enter a valid email address." };
+  const fieldError = validateBusinessFields(input);
+  if (fieldError) {
+    return { ok: false, error: fieldError };
   }
 
   const existing = await getBusinessByPhone(phone);
@@ -104,12 +124,9 @@ export async function updateBusinessProfile(
     contactListVisible: boolean;
   },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!input.businessName.trim()) {
-    return { ok: false, error: "Business name is required." };
-  }
-
-  if (!input.email.trim() || !input.email.includes("@")) {
-    return { ok: false, error: "Enter a valid email address." };
+  const fieldError = validateBusinessFields(input);
+  if (fieldError) {
+    return { ok: false, error: fieldError };
   }
 
   const db = await getDb();

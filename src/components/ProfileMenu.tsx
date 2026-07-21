@@ -9,11 +9,17 @@ import { faChevronDown, faFileLines, faPenToSquare, faRightFromBracket, faShield
 
 export function ProfileMenu({
   businessName,
+  memberName,
   isAdmin = false,
 }: {
   businessName: string;
+  memberName?: string;
   isAdmin?: boolean;
 }) {
+  const displayName = memberName ?? businessName;
+  const dropdownLabel = memberName
+    ? `${memberName} (${businessName})`
+    : businessName;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,18 +60,18 @@ export function ProfileMenu({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={`Account menu for ${businessName}`}
+        aria-label={`Account menu for ${dropdownLabel}`}
       >
         <span className="profile-menu-avatar" aria-hidden="true">
           <FaIcon icon={faUser} />
         </span>
-        <span className="profile-menu-name">{businessName}</span>
+        <span className="profile-menu-name">{displayName}</span>
         <FaIcon icon={faChevronDown} className="profile-menu-chevron" aria-hidden />
       </button>
 
       {open ? (
         <div className="profile-menu-dropdown" role="menu">
-          <p className="profile-menu-dropdown-label">{businessName}</p>
+          <p className="profile-menu-dropdown-label">{dropdownLabel}</p>
           <Link
             href="/my-reports"
             className="profile-menu-item"

@@ -53,6 +53,18 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  if (
+    body.title.length > 200 ||
+    body.description.length > 10000 ||
+    body.address.length > 300 ||
+    body.suburb.length > 100
+  ) {
+    return NextResponse.json(
+      { error: "One or more fields exceed the maximum allowed length." },
+      { status: 400 },
+    );
+  }
+
   const updated = await updateCrime(id, business.id, {
     title: body.title.trim(),
     description: body.description.trim(),

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BizWatchLogo } from "@/components/BizWatchLogo";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { SiteHeaderNav } from "@/components/SiteHeaderNav";
 import { isAdmin } from "@/lib/admin";
 import { getCurrentBusiness } from "@/lib/session";
@@ -33,11 +34,14 @@ export async function AppHeader() {
           <SiteHeaderNav
             signedIn={signedIn}
             businessName={business?.business_name}
+            memberName={business?.member_name ?? undefined}
             isAdmin={business ? isAdmin(business) : false}
             navLinks={navLinks}
           />
         </div>
       </div>
+
+      {signedIn ? <MobileTabBar /> : null}
     </header>
   );
 }

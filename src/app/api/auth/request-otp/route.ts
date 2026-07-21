@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       ok: true,
       phone: result.phone,
       businessName: result.businessName,
+      memberName: result.memberName,
       devCode: result.devCode,
     });
   } catch {

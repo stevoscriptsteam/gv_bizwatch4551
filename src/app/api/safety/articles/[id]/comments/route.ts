@@ -43,7 +43,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const comment = await addArticleComment(id, business.id, text);
+  const comment = await addArticleComment(id, business.id, text, business.member_id);
   if (!comment) {
     return NextResponse.json({ error: "Article not found." }, { status: 404 });
   }

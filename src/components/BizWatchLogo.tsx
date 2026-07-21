@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 export function BizWatchLogo({ compact = false }: { compact?: boolean }) {
   const height = compact ? 64 : 72;

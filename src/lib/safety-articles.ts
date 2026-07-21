@@ -7,6 +7,7 @@ import type {
 } from "@/lib/types";
 import { emptyArticleReactionCounts } from "@/lib/types";
 import { getDb } from "@/lib/cloudflare";
+import { ARTICLE_ENGAGEMENT, enrichWithEngagement } from "@/lib/engagement";
 
 export async function listPublishedArticles(): Promise<SafetyArticleSummary[]> {
   const db = await getDb();
@@ -71,60 +72,10 @@ export async function enrichArticlesWithEngagement<T extends { id: string }>(
   articles: T[],
   viewerBusinessId: string,
 ): Promise<(T & ArticleEngagementState)[]> {
-  if (articles.length === 0) return articles;
-
-  const db = await getDb();
-  const ids = articles.map((a) => a.id);
-  const placeholders = ids.map(() => "?").join(", ");
-
-  const commentRows = await db
-    .prepare(
-      `SELECT article_id, COUNT(*) as count
-       FROM article_comments
-       WHERE article_id IN (${placeholders}) AND deleted_at IS NULL
-       GROUP BY article_id`,
-    )
-    .bind(...ids)
-    .all<{ article_id: string; count: number }>();
-
-  const reactionRows = await db
-    .prepare(
-      `SELECT article_id, reaction_type, COUNT(*) as count
-       FROM article_reactions
-       WHERE article_id IN (${placeholders})
-       GROUP BY article_id, reaction_type`,
-    )
-    .bind(...ids)
-    .all<{ article_id: string; reaction_type: ArticleReactionType; count: number }>();
-
-  const userReactionRows = await db
-    .prepare(
-      `SELECT article_id, reaction_type
-       FROM article_reactions
-       WHERE business_id = ? AND article_id IN (${placeholders})`,
-    )
-    .bind(viewerBusinessId, ...ids)
-    .all<{ article_id: string; reaction_type: ArticleReactionType }>();
-
-  const commentMap = new Map(
-    (commentRows.results ?? []).map((r) => [r.article_id, r.count]),
+  return enrichWithEngagement<T, ArticleReactionType, ArticleReactionCounts>(
+    ARTICLE_ENGAGEMENT,
+    articles,
+    viewerBusinessId,
+    emptyArticleReactionCounts,
   );
-
-  const reactionMap = new Map<string, ArticleReactionCounts>();
-  for (const row of reactionRows.results ?? []) {
-    const counts = reactionMap.get(row.article_id) ?? emptyArticleReactionCounts();
-    counts[row.reaction_type] = row.count;
-    reactionMap.set(row.article_id, counts);
-  }
-
-  const userReactionMap = new Map(
-    (userReactionRows.results ?? []).map((r) => [r.article_id, r.reaction_type]),
-  );
-
-  return articles.map((article) => ({
-    ...article,
-    comment_count: commentMap.get(article.id) ?? 0,
-    reactions: reactionMap.get(article.id) ?? emptyArticleReactionCounts(),
-    user_reaction: userReactionMap.get(article.id) ?? null,
-  }));
 }

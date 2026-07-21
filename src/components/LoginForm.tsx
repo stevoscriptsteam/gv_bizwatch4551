@@ -13,7 +13,7 @@ export function LoginForm() {
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
-  const [businessName, setBusinessName] = useState("");
+  const [accountLabel, setAccountLabel] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,6 +32,7 @@ export function LoginForm() {
     const data = (await res.json()) as {
       error?: string;
       businessName?: string;
+      memberName?: string;
       devCode?: string;
     };
 
@@ -42,7 +43,11 @@ export function LoginForm() {
       return;
     }
 
-    setBusinessName(data.businessName ?? "");
+    setAccountLabel(
+      data.memberName && data.businessName
+        ? `${data.memberName} (${data.businessName})`
+        : data.businessName ?? "",
+    );
     setDevCode(data.devCode ?? null);
     setStep("code");
   }
@@ -76,10 +81,10 @@ export function LoginForm() {
       <form onSubmit={verifyCode} className="space-y-4" noValidate>
         <div className="rounded-md bg-blue-100 p-4 text-sm text-grey-950">
           A verification code was sent to <strong>{phone}</strong>
-          {businessName ? (
+          {accountLabel ? (
             <>
               {" "}
-              for <strong>{businessName}</strong>
+              for <strong>{accountLabel}</strong>
             </>
           ) : null}
           .

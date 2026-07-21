@@ -5,6 +5,7 @@
 # Next.js
 .next/
 .open-next/
+tsconfig.tsbuildinfo
 
 # Dependencies
 node_modules/

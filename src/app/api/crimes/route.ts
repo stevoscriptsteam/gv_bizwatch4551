@@ -51,6 +51,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "All required fields must be completed." }, { status: 400 });
   }
 
+  if (
+    body.title.length > 200 ||
+    body.description.length > 10000 ||
+    body.crimeType.length > 100 ||
+    body.address.length > 300 ||
+    body.suburb.length > 100
+  ) {
+    return NextResponse.json(
+      { error: "One or more fields exceed the maximum allowed length." },
+      { status: 400 },
+    );
+  }
+
   const crimeId = await createCrime({
     businessId: business.id,
     title: body.title.trim(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Crime } from "@/lib/types";
 import { POSTCODE_4551_SUBURBS } from "@/lib/types";
 import { ReportAttachments } from "@/components/ReportAttachments";
@@ -12,30 +12,24 @@ type EditReportDialogProps = {
   onSaved: (patch: Partial<Crime>) => void;
 };
 
-export function EditReportDialog({
+export function EditReportDialog({ open, ...props }: EditReportDialogProps) {
+  // The form is mounted only while the dialog is open, so its state
+  // initialises fresh from the crime on every open — no reset effect needed.
+  if (!open) return null;
+  return <EditReportDialogForm {...props} />;
+}
+
+function EditReportDialogForm({
   crime,
-  open,
   onClose,
   onSaved,
-}: EditReportDialogProps) {
+}: Omit<EditReportDialogProps, "open">) {
   const [title, setTitle] = useState(crime.title);
   const [description, setDescription] = useState(crime.description);
   const [address, setAddress] = useState(crime.address || crime.location);
   const [suburb, setSuburb] = useState(crime.suburb ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setTitle(crime.title);
-      setDescription(crime.description);
-      setAddress(crime.address || crime.location);
-      setSuburb(crime.suburb ?? "");
-      setError(null);
-    }
-  }, [open, crime]);
-
-  if (!open) return null;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

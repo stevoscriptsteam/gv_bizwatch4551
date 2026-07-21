@@ -158,7 +158,6 @@ export function AdminClient({ isMaster }: AdminClientProps) {
 
   async function toggleBusinessAdmin(business: Business) {
     const isAdmin = business.is_admin !== 1;
-    const label = isAdmin ? "grant admin to" : "remove admin from";
     if (!window.confirm(`${isAdmin ? "Grant admin access to" : "Remove admin access from"} ${business.business_name}?`)) {
       return;
     }

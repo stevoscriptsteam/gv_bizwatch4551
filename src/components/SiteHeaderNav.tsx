@@ -12,6 +12,7 @@ type NavLink = { href: string; label: string };
 type SiteHeaderNavProps = {
   signedIn: boolean;
   businessName?: string;
+  memberName?: string;
   isAdmin?: boolean;
   navLinks: NavLink[];
 };
@@ -19,16 +20,21 @@ type SiteHeaderNavProps = {
 export function SiteHeaderNav({
   signedIn,
   businessName,
+  memberName,
   isAdmin = false,
   navLinks,
 }: SiteHeaderNavProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
 
-  useEffect(() => {
+  // Close the mobile menu on navigation ("adjust state when props change"
+  // pattern from the React docs, instead of a cascading effect).
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     document.body.classList.toggle("mobile-nav-open", open);
@@ -70,7 +76,11 @@ export function SiteHeaderNav({
           {signedIn && businessName ? (
             <>
               <li>
-                <ProfileMenu businessName={businessName} isAdmin={isAdmin} />
+                <ProfileMenu
+                  businessName={businessName}
+                  memberName={memberName}
+                  isAdmin={isAdmin}
+                />
               </li>
               <li>
                 <Link href="/report" className="btn btn-report">

@@ -2,6 +2,7 @@ import type { Crime } from "@/lib/types";
 import { getDb } from "@/lib/cloudflare";
 import { generateId } from "@/lib/auth";
 import { MASTER_PHONE } from "@/lib/admin";
+import { validateBusinessFields } from "@/lib/businesses";
 import { normalizePhone } from "@/lib/phone";
 import type { Business } from "@/lib/types";
 
@@ -20,6 +21,27 @@ export type AdminComment = {
   parent_id: string;
   parent_title: string;
   deleted_at?: string | null;
+};
+
+const BUSINESS_COLUMNS =
+  "id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, created_at";
+
+const COMMENT_SELECT: Record<"report" | "article", string> = {
+  report: `SELECT rc.id, rc.body, rc.created_at, rc.business_id, rc.deleted_at,
+                  b.business_name, rc.crime_id as parent_id, c.title as parent_title
+           FROM report_comments rc
+           JOIN businesses b ON b.id = rc.business_id
+           JOIN crimes c ON c.id = rc.crime_id`,
+  article: `SELECT ac.id, ac.body, ac.created_at, ac.business_id, ac.deleted_at,
+                   b.business_name, ac.article_id as parent_id, sa.title as parent_title
+            FROM article_comments ac
+            JOIN businesses b ON b.id = ac.business_id
+            JOIN safety_articles sa ON sa.id = ac.article_id`,
+};
+
+const COMMENT_ALIAS: Record<"report" | "article", string> = {
+  report: "rc",
+  article: "ac",
 };
 
 export async function listAdminReports(archivedOnly?: boolean): Promise<AdminReport[]> {
@@ -87,65 +109,28 @@ export async function setReportArchived(
     .first<AdminReport>();
 }
 
+type AdminCommentRow = Omit<AdminComment, "type">;
+
 export async function listAdminComments(
   type?: "report" | "article",
 ): Promise<AdminComment[]> {
   const db = await getDb();
   const comments: AdminComment[] = [];
+  const types = type ? [type] : (["report", "article"] as const);
 
-  if (!type || type === "report") {
-    const reportRows = await db
+  for (const commentType of types) {
+    const alias = COMMENT_ALIAS[commentType];
+    const rows = await db
       .prepare(
-        `SELECT rc.id, rc.body, rc.created_at, rc.business_id, rc.deleted_at,
-                b.business_name, rc.crime_id as parent_id, c.title as parent_title
-         FROM report_comments rc
-         JOIN businesses b ON b.id = rc.business_id
-         JOIN crimes c ON c.id = rc.crime_id
-         WHERE rc.deleted_at IS NULL
-         ORDER BY rc.created_at DESC
+        `${COMMENT_SELECT[commentType]}
+         WHERE ${alias}.deleted_at IS NULL
+         ORDER BY ${alias}.created_at DESC
          LIMIT 100`,
       )
-      .all<{
-        id: string;
-        body: string;
-        created_at: string;
-        business_id: string;
-        business_name: string;
-        parent_id: string;
-        parent_title: string;
-        deleted_at: string | null;
-      }>();
+      .all<AdminCommentRow>();
 
-    for (const row of reportRows.results ?? []) {
-      comments.push({ ...row, type: "report" });
-    }
-  }
-
-  if (!type || type === "article") {
-    const articleRows = await db
-      .prepare(
-        `SELECT ac.id, ac.body, ac.created_at, ac.business_id, ac.deleted_at,
-                b.business_name, ac.article_id as parent_id, sa.title as parent_title
-         FROM article_comments ac
-         JOIN businesses b ON b.id = ac.business_id
-         JOIN safety_articles sa ON sa.id = ac.article_id
-         WHERE ac.deleted_at IS NULL
-         ORDER BY ac.created_at DESC
-         LIMIT 100`,
-      )
-      .all<{
-        id: string;
-        body: string;
-        created_at: string;
-        business_id: string;
-        business_name: string;
-        parent_id: string;
-        parent_title: string;
-        deleted_at: string | null;
-      }>();
-
-    for (const row of articleRows.results ?? []) {
-      comments.push({ ...row, type: "article" });
+    for (const row of rows.results ?? []) {
+      comments.push({ ...row, type: commentType });
     }
   }
 
@@ -173,42 +158,19 @@ export async function moderateComment(
 
   if (!result.meta.changes) return null;
 
-  if (type === "report") {
-    const row = await db
-      .prepare(
-        `SELECT rc.id, rc.body, rc.created_at, rc.business_id, rc.deleted_at,
-                b.business_name, rc.crime_id as parent_id, c.title as parent_title
-         FROM report_comments rc
-         JOIN businesses b ON b.id = rc.business_id
-         JOIN crimes c ON c.id = rc.crime_id
-         WHERE rc.id = ?`,
-      )
-      .bind(commentId)
-      .first<AdminComment>();
-
-    return row ? { ...row, type: "report" } : null;
-  }
-
   const row = await db
-    .prepare(
-      `SELECT ac.id, ac.body, ac.created_at, ac.business_id, ac.deleted_at,
-              b.business_name, ac.article_id as parent_id, sa.title as parent_title
-       FROM article_comments ac
-       JOIN businesses b ON b.id = ac.business_id
-       JOIN safety_articles sa ON sa.id = ac.article_id
-       WHERE ac.id = ?`,
-    )
+    .prepare(`${COMMENT_SELECT[type]} WHERE ${COMMENT_ALIAS[type]}.id = ?`)
     .bind(commentId)
-    .first<AdminComment>();
+    .first<AdminCommentRow>();
 
-  return row ? { ...row, type: "article" } : null;
+  return row ? { ...row, type } : null;
 }
 
 export async function listAdminBusinesses(): Promise<Business[]> {
   const db = await getDb();
   const result = await db
     .prepare(
-      `SELECT id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, created_at
+      `SELECT ${BUSINESS_COLUMNS}
        FROM businesses
        ORDER BY active ASC, business_name COLLATE NOCASE ASC`,
     )
@@ -228,8 +190,9 @@ export async function addAdminBusiness(input: {
     return { ok: false, error: "Enter a valid Australian mobile number." };
   }
 
-  if (!input.businessName.trim() || !input.email.trim()) {
-    return { ok: false, error: "Business name and email are required." };
+  const fieldError = validateBusinessFields(input);
+  if (fieldError) {
+    return { ok: false, error: fieldError };
   }
 
   const db = await getDb();
@@ -277,9 +240,7 @@ export async function setBusinessActive(
   }
 
   return db
-    .prepare(
-      "SELECT id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, created_at FROM businesses WHERE id = ?",
-    )
+    .prepare(`SELECT ${BUSINESS_COLUMNS} FROM businesses WHERE id = ?`)
     .bind(businessId)
     .first<Business>();
 }
@@ -309,9 +270,7 @@ export async function setBusinessAdmin(
   if (!result.meta.changes) return null;
 
   return db
-    .prepare(
-      "SELECT id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, created_at FROM businesses WHERE id = ?",
-    )
+    .prepare(`SELECT ${BUSINESS_COLUMNS} FROM businesses WHERE id = ?`)
     .bind(targetBusinessId)
     .first<Business>();
 }
@@ -319,9 +278,7 @@ export async function setBusinessAdmin(
 export async function getBusinessById(businessId: string): Promise<Business | null> {
   const db = await getDb();
   return db
-    .prepare(
-      "SELECT id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, created_at FROM businesses WHERE id = ?",
-    )
+    .prepare(`SELECT ${BUSINESS_COLUMNS} FROM businesses WHERE id = ?`)
     .bind(businessId)
     .first<Business>();
 }

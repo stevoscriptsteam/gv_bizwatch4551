@@ -76,7 +76,7 @@ export function ReportLocationPreview({ crime, markerColor }: ReportLocationPrev
       destroyLeafletMap(mapRef.current);
       mapRef.current = null;
     };
-  }, [visible, coords]);
+  }, [visible, coords, markerColor]);
 
   if (!coords) return null;
 

@@ -1,6 +1,7 @@
 import type { Alert, Crime, ReportStats } from "@/lib/types";
-import { getDb } from "@/lib/cloudflare";
+import { getDb, runInBackground } from "@/lib/cloudflare";
 import { generateId } from "@/lib/auth";
+import { sendCrimeAlertSmsFanout } from "@/lib/notifications";
 
 export async function listCrimesForArea(): Promise<Crime[]> {
   const db = await getDb();
@@ -75,21 +76,28 @@ export async function createCrime(input: {
     )
     .run();
 
-  const businesses = await db
-    .prepare("SELECT id FROM businesses WHERE active = 1 AND id != ?")
-    .bind(input.businessId)
-    .all<{ id: string }>();
-
   const alertMessage = `Reported ${input.crimeType} near ${input.address}, ${input.suburb}. Information submitted to BizWatch.`;
 
-  for (const biz of businesses.results ?? []) {
-    await db
-      .prepare(
-        "INSERT INTO alerts (id, business_id, crime_id, message) VALUES (?, ?, ?, ?)",
-      )
-      .bind(generateId("alert"), biz.id, crimeId, alertMessage)
-      .run();
-  }
+  // Fan out alerts to every other active business in a single statement
+  // instead of one INSERT round trip per business.
+  await db
+    .prepare(
+      `INSERT INTO alerts (id, business_id, crime_id, message)
+       SELECT 'alert-' || lower(hex(randomblob(8))), id, ?, ?
+       FROM businesses
+       WHERE active = 1 AND id != ?`,
+    )
+    .bind(crimeId, alertMessage, input.businessId)
+    .run();
+
+  // SMS alerts to opted-in businesses, sent after the response returns.
+  await runInBackground(() =>
+    sendCrimeAlertSmsFanout({
+      reporterBusinessId: input.businessId,
+      categoryId: input.categoryId ?? null,
+      suburb: input.suburb || null,
+    }),
+  );
 
   return crimeId;
 }
@@ -146,36 +154,35 @@ export async function countUnreadAlerts(businessId: string): Promise<number> {
 export async function getReportStats(): Promise<ReportStats> {
   const db = await getDb();
 
-  const allTimeRow = await db
-    .prepare(
+  const [allTimeRes, last24Res, topSuburbRes] = await db.batch<{
+    suburb?: string;
+    count: number;
+  }>([
+    db.prepare(
       `SELECT COUNT(*) as count FROM crimes
        WHERE postcode = '4551' AND deleted_at IS NULL AND archived_at IS NULL`,
-    )
-    .first<{ count: number }>();
-
-  const last24Row = await db
-    .prepare(
+    ),
+    db.prepare(
       `SELECT COUNT(*) as count FROM crimes
        WHERE postcode = '4551' AND deleted_at IS NULL AND archived_at IS NULL
          AND created_at > datetime('now', '-24 hours')`,
-    )
-    .first<{ count: number }>();
-
-  const topSuburbRow = await db
-    .prepare(
+    ),
+    db.prepare(
       `SELECT suburb, COUNT(*) as count FROM crimes
        WHERE postcode = '4551' AND deleted_at IS NULL AND archived_at IS NULL
          AND suburb IS NOT NULL AND TRIM(suburb) != ''
        GROUP BY suburb
        ORDER BY count DESC, suburb ASC
        LIMIT 1`,
-    )
-    .first<{ suburb: string; count: number }>();
+    ),
+  ]);
+
+  const topSuburbRow = topSuburbRes.results?.[0];
 
   return {
-    allTime: allTimeRow?.count ?? 0,
-    last24Hours: last24Row?.count ?? 0,
-    topSuburb: topSuburbRow
+    allTime: allTimeRes.results?.[0]?.count ?? 0,
+    last24Hours: last24Res.results?.[0]?.count ?? 0,
+    topSuburb: topSuburbRow?.suburb
       ? { suburb: topSuburbRow.suburb, count: topSuburbRow.count }
       : null,
   };

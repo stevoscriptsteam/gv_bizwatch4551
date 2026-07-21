@@ -201,7 +201,8 @@ export function ReportFlow() {
     setErrors({});
   }
 
-  async function useCurrentLocation() {
+  // Not a hook — named to avoid the "use" prefix so lint treats it correctly.
+  async function applyCurrentLocation() {
     setLocating(true);
     setLocationMessage("");
     setErrors({});
@@ -416,7 +417,7 @@ export function ReportFlow() {
           <div>
             <button
               type="button"
-              onClick={() => void useCurrentLocation()}
+              onClick={() => void applyCurrentLocation()}
               disabled={locating}
               className="btn btn-secondary btn-location"
             >
