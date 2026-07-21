@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Crime } from "@/lib/types";
 import { POSTCODE_4551_SUBURBS } from "@/lib/types";
+import { ReportAttachments } from "@/components/ReportAttachments";
 
 type EditReportDialogProps = {
   crime: Crime;
@@ -125,6 +126,8 @@ export function EditReportDialog({
               ))}
             </select>
           </label>
+
+          <ReportAttachments crimeId={crime.id} editable />
 
           {error ? <p className="form-error">{error}</p> : null}
 

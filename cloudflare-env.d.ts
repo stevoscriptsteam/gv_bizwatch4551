@@ -2,6 +2,7 @@
 
 interface CloudflareEnv {
   DB: D1Database;
+  MEDIA: R2Bucket;
   APP_NAME: string;
   REGION_LABEL: string;
   SESSION_SECRET?: string;

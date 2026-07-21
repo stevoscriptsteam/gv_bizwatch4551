@@ -9,3 +9,8 @@ export async function getDb(): Promise<D1Database> {
   const env = await getEnv();
   return env.DB;
 }
+
+export async function getMediaBucket(): Promise<R2Bucket> {
+  const env = await getEnv();
+  return env.MEDIA;
+}

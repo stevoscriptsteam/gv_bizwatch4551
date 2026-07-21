@@ -17,6 +17,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "bizwatch-4551-media"
+    }
+  ],
   "vars": {
     "APP_NAME": "BizWatch",
     "REGION_LABEL": "Caloundra & 4551"

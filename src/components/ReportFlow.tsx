@@ -22,6 +22,7 @@ import { FormSection, FormField } from "@/components/ui/FormSection";
 import { ReportCategoryCard } from "@/components/ui/ReportCategoryCard";
 import { ConfirmationPanel } from "@/components/ui/ConfirmationPanel";
 import { EmergencyNotice } from "@/components/ui/EmergencyNotice";
+import { EvidenceUpload, uploadReportAttachments } from "@/components/EvidenceUpload";
 import { FaIcon } from "@/components/FaIcon";
 import { faLocationCrosshairs } from "@/lib/icons";
 
@@ -66,6 +67,8 @@ export function ReportFlow() {
   const [locating, setLocating] = useState(false);
   const [validatingLocation, setValidatingLocation] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState("");
 
   useEffect(() => {
     try {
@@ -283,8 +286,21 @@ export function ReportFlow() {
       return;
     }
 
+    const crimeId = data.crimeId ?? "";
+    if (crimeId && pendingFiles.length > 0) {
+      const uploadResult = await uploadReportAttachments(crimeId, pendingFiles);
+      if (uploadResult.errors.length > 0 && uploadResult.uploaded === 0) {
+        setSubmitError(
+          `Report submitted but files could not be uploaded: ${uploadResult.errors.join(" ")}`,
+        );
+        setReference(formatReferenceNumber(crimeId));
+        setStep(7);
+        return;
+      }
+    }
+
     localStorage.removeItem(DRAFT_KEY);
-    setReference(formatReferenceNumber(data.crimeId ?? ""));
+    setReference(formatReferenceNumber(crimeId));
     setStep(7);
   }
 
@@ -515,7 +531,7 @@ export function ReportFlow() {
             label="Evidence details"
             htmlFor="evidenceNotes"
             optional
-            hint="Describe what evidence exists and where it is stored. File upload will be available in a future update."
+            hint="Describe any photographs, CCTV footage or other evidence you have available."
           >
             <textarea
               id="evidenceNotes"
@@ -525,17 +541,18 @@ export function ReportFlow() {
               placeholder="Example: CCTV camera at front entrance, footage available for 30 days."
             />
           </FormField>
-          <div
-            className="rounded-md border-2 border-dashed border-grey-300 bg-grey-50 p-8 text-center"
-            role="region"
-            aria-label="File upload area"
-          >
-            <p className="text-sm font-semibold text-grey-700">Photograph or CCTV upload</p>
-            <p className="small-text mt-2">
-              Direct file upload is coming soon. For now, describe your evidence above and
-              a coordinator may contact you to arrange secure transfer.
-            </p>
-          </div>
+          <EvidenceUpload
+            files={pendingFiles}
+            onChange={(files) => {
+              setPendingFiles(files);
+              setFileError("");
+            }}
+            error={fileError}
+          />
+          <p className="small-text mt-3">
+            Evidence files are stored securely and are only visible to you and BizWatch
+            coordinators — not other businesses in the feed.
+          </p>
         </FormSection>
       )}
 
@@ -619,6 +636,15 @@ export function ReportFlow() {
               <div>
                 <dt className="font-semibold text-grey-700">Evidence</dt>
                 <dd>{draft.evidenceNotes}</dd>
+              </div>
+            ) : null}
+            {pendingFiles.length > 0 ? (
+              <div>
+                <dt className="font-semibold text-grey-700">Attachments</dt>
+                <dd>
+                  {pendingFiles.length} file{pendingFiles.length === 1 ? "" : "s"} ready to
+                  upload
+                </dd>
               </div>
             ) : null}
           </dl>
