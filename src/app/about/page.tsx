@@ -27,20 +27,11 @@ export default function AboutPage() {
       description="A private community safety reporting service for approved businesses in Caloundra and postcode 4551."
     >
       <p className="supporting-text">
-        BizWatch 4551 is a private service for local businesses. It provides a structured
-        way to report crime, suspicious activity and safety concerns, share information
-        with other approved businesses, identify patterns in the 4551 community and access
-        practical safety guidance.
-      </p>
-      <p className="supporting-text">
-        BizWatch is a community reporting service. It is not operated by Queensland
-        Police, Sunshine Coast Council or any government agency, unless formally
-        authorised in writing.
-      </p>
-      <p className="supporting-text">
-        Only businesses that register and are approved can submit reports and receive local
-        alerts. To join, register your business via this site. Once approved, sign in with
-        your registered mobile number.
+      BizWatch is a private community safety network for approved businesses across Caloundra and the 4551 area.
+
+  It gives local businesses a simple way to report incidents, share relevant information and stay informed about issues affecting nearby businesses. By bringing this information together, BizWatch can help identify repeat behaviour and emerging local patterns.
+
+      BizWatch is not an emergency service and does not replace reporting crime to Queensland Police. If someone is in immediate danger, call Triple Zero (000).
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <Link href="/register" className="btn btn-primary inline-flex">

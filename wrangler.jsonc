@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "bizwatch-4551",
+  "name": "gv-bizwatch4551",
+  "account_id": "965c1c780f1112c441a6884f202f81c3",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-03-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -12,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "bizwatch-4551",
-      "database_id": "local",
+      "database_id": "9a296306-c972-4ee6-b917-199dffb71c04",
       "migrations_dir": "migrations"
     }
   ],
