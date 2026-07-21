@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bizwatch-4551",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bizwatch-4551",
+      "database_id": "local",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "APP_NAME": "BizWatch",
+    "REGION_LABEL": "Caloundra & 4551"
+  }
+}

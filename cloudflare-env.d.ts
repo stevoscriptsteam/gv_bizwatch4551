@@ -1,0 +1,12 @@
+/// <reference types="@cloudflare/workers-types" />
+
+interface CloudflareEnv {
+  DB: D1Database;
+  APP_NAME: string;
+  REGION_LABEL: string;
+  SESSION_SECRET?: string;
+  TWILIO_ACCOUNT_SID?: string;
+  TWILIO_AUTH_TOKEN?: string;
+  TWILIO_FROM_NUMBER?: string;
+  ADMIN_SECRET?: string;
+}
