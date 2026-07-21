@@ -184,7 +184,7 @@ export async function addAdminBusiness(input: {
   phone: string;
   email: string;
   suburb?: string;
-}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+}): Promise<{ ok: true; id: string; phone: string } | { ok: false; error: string }> {
   const phone = normalizePhone(input.phone);
   if (!phone) {
     return { ok: false, error: "Enter a valid Australian mobile number." };
@@ -215,7 +215,7 @@ export async function addAdminBusiness(input: {
     return { ok: false, error: "Could not add business. Phone may already exist." };
   }
 
-  return { ok: true, id };
+  return { ok: true, id, phone };
 }
 
 export async function setBusinessActive(

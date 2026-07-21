@@ -27,5 +27,8 @@
     "APP_NAME": "BizWatch",
     "REGION_LABEL": "Caloundra & 4551",
     "APP_URL": "https://bizwatch4551.com.au"
+    // Twilio credentials must NOT be listed here (they would be public in git).
+    // Set once with: node scripts/sync-twilio-secrets.mjs
+    // (reads .dev.vars and runs `wrangler secret put` for each key)
   }
 }

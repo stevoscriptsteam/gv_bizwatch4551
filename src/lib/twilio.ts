@@ -56,3 +56,26 @@ export async function sendOtpSms(
   const result = await sendSms(phone, body);
   return result.ok;
 }
+
+export async function sendRegistrationSms(input: {
+  phone: string;
+  approvedBy: string;
+  reference: string;
+}): Promise<SendSmsResult> {
+  // Keep SMS as a fixed 4-line template: strip control chars / newlines so a
+  // crafted reference cannot inject extra "Approved by:" lines.
+  const sanitize = (value: string, max: number) =>
+    value.replace(/[\r\n\t\v\f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+
+  const approvedBy = sanitize(input.approvedBy, 120) || "BizWatch";
+  const reference =
+    sanitize(input.reference, 300) || "Your registration has been approved.";
+  const body = [
+    "You have been registered for BizWatch 4551",
+    "",
+    `Approved by: ${approvedBy}`,
+    `Reference: ${reference}`,
+  ].join("\n");
+
+  return sendSms(input.phone, body);
+}

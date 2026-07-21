@@ -36,8 +36,10 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     phone: "",
     email: "",
     suburb: "",
+    message: "",
   });
   const [addingBusiness, setAddingBusiness] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const loadReports = useCallback(async () => {
     setLoading(true);
@@ -180,6 +182,7 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     event.preventDefault();
     setAddingBusiness(true);
     setError(null);
+    setNotice(null);
 
     const res = await fetch("/api/admin/businesses", {
       method: "POST",
@@ -187,11 +190,27 @@ export function AdminClient({ isMaster }: AdminClientProps) {
       body: JSON.stringify(newBusiness),
     });
 
+    const data = (await res.json()) as {
+      error?: string;
+      smsSent?: boolean;
+      smsError?: string;
+    };
+
     if (res.ok) {
-      setNewBusiness({ businessName: "", phone: "", email: "", suburb: "" });
+      setNewBusiness({
+        businessName: "",
+        phone: "",
+        email: "",
+        suburb: "",
+        message: "",
+      });
       await loadBusinesses();
+      setNotice(
+        data.smsSent
+          ? "Business added and registration SMS sent."
+          : `Business added, but SMS was not sent${data.smsError ? `: ${data.smsError}` : "."}`,
+      );
     } else {
-      const data = (await res.json()) as { error?: string };
       setError(data.error ?? "Could not add business.");
     }
 
@@ -228,6 +247,7 @@ export function AdminClient({ isMaster }: AdminClientProps) {
       </div>
 
       {error ? <p className="admin-error">{error}</p> : null}
+      {notice ? <p className="admin-notice">{notice}</p> : null}
 
       {loading ? <p className="supporting-text mt-6">Loading…</p> : null}
 
@@ -384,6 +404,22 @@ export function AdminClient({ isMaster }: AdminClientProps) {
                 />
               </label>
             </div>
+            <label className="admin-form-message">
+              SMS reference message
+              <textarea
+                required
+                maxLength={300}
+                rows={3}
+                value={newBusiness.message}
+                onChange={(e) =>
+                  setNewBusiness((prev) => ({ ...prev, message: e.target.value }))
+                }
+                placeholder="e.g. Welcome to BizWatch — you can now sign in with this mobile number."
+              />
+              <span className="admin-form-hint">
+                Sent by SMS with the registration notice. Shown as “Reference: …”
+              </span>
+            </label>
             <button
               type="submit"
               className="btn btn-secondary btn-sm"
