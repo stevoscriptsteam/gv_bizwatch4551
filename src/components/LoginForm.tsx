@@ -147,7 +147,7 @@ export function LoginForm() {
   return (
     <form onSubmit={requestCode} className="space-y-4" noValidate>
       <p className="supporting-text">
-        Enter the mobile number registered to your approved business account.
+        Enter the mobile number registered to your business account.
       </p>
 
       <div>

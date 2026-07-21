@@ -14,7 +14,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "BizWatch | Community safety reporting for Caloundra & 4551",
   description:
-    "BizWatch 4551 is a private community safety service for approved businesses across Caloundra and postcode 4551.",
+    "BizWatch 4551 is a private community safety service for registered businesses across Caloundra and postcode 4551.",
 };
 
 export default function RootLayout({

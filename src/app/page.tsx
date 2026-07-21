@@ -22,7 +22,7 @@ export default async function HomePage() {
               BizWatch 4551
             </h1>
             <p className="home-intro-lead">
-              A private incident reporting service for approved businesses in the 4551 area.
+              A private incident reporting service for registered businesses in the 4551 area.
             </p>
             <p className="home-intro-support">
               Signed-in users can submit incident reports and access their business dashboard.
@@ -107,7 +107,7 @@ export default async function HomePage() {
             Business access only
           </h2>
           <p className="home-info-strip-text">
-            BizWatch is available to registered and approved businesses in postcode 4551.
+            BizWatch is available to registered businesses in postcode 4551.
             New businesses can apply online. Access is granted after review.
           </p>
         </div>

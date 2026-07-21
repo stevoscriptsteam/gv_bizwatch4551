@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { Crime } from "@/lib/types";
-import { formatReferenceNumber, mapDbStatus } from "@/lib/types";
+import { formatReferenceNumber } from "@/lib/types";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { StatusTag } from "@/components/ui/StatusTag";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { EmergencyNotice } from "@/components/ui/EmergencyNotice";
 import { ReportOwnerActions } from "@/components/ReportOwnerActions";
@@ -48,7 +47,7 @@ export function MyReportsClient() {
     <div className="container-content">
       <PageHeader
         title="Your reports"
-        description="Reports submitted by your business, with status and reference numbers."
+        description="Reports submitted by your business, with reference numbers."
       >
         <Link href="/report" className="btn btn-report">
           Make a new report
@@ -62,8 +61,8 @@ export function MyReportsClient() {
       ) : reports.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="No reports submitted"
-            description="When you submit a report through BizWatch, it will appear here with its status and reference number."
+            title="No reports yet"
+            description="When you submit a report through BizWatch, it will appear here with its reference number."
             action={
               <Link href="/report" className="btn btn-report">
                 Make a report
@@ -89,9 +88,6 @@ export function MyReportsClient() {
                   Category
                 </th>
                 <th className="p-3 font-semibold" scope="col">
-                  Status
-                </th>
-                <th className="p-3 font-semibold" scope="col">
                   Submitted
                 </th>
                 <th className="p-3 font-semibold" scope="col">
@@ -108,9 +104,6 @@ export function MyReportsClient() {
                   <td className="p-3">{crime.title}</td>
                   <td className="p-3 text-grey-700">{crime.address || crime.location}</td>
                   <td className="p-3">{crime.crime_type}</td>
-                  <td className="p-3">
-                    <StatusTag status={mapDbStatus(crime.status)} />
-                  </td>
                   <td className="p-3 text-grey-700">{formatDate(crime.created_at)}</td>
                   <td className="p-3">
                     <ReportOwnerActions

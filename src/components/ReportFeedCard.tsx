@@ -1,11 +1,10 @@
 "use client";
 
 import type { Crime } from "@/lib/types";
-import { formatReferenceNumber, mapDbStatus } from "@/lib/types";
+import { formatReferenceNumber } from "@/lib/types";
 import { FaIcon } from "@/components/FaIcon";
 import { INCIDENT_COLORS, INCIDENT_ICONS } from "@/lib/icons";
 import { getCategoryId } from "@/lib/incident-icons";
-import { StatusTag } from "@/components/ui/StatusTag";
 import { ReportLocationPreview } from "@/components/ReportLocationPreview";
 import { ReportEngagement } from "@/components/ReportEngagement";
 import { ReportOwnerActions } from "@/components/ReportOwnerActions";
@@ -74,7 +73,6 @@ export function ReportFeedCard({
             {amended ? " · Edited" : ""}
           </p>
         </div>
-        <StatusTag status={mapDbStatus(crime.status)} />
       </header>
 
       <h3 className="report-feed-card-title">{crime.title}</h3>

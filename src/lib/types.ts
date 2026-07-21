@@ -75,6 +75,8 @@ export type Business = {
 export type SessionBusiness = Business & {
   member_id?: string | null;
   member_name?: string | null;
+  /** Team member's own admin flag (only meaningful when member_id is set). */
+  member_is_admin?: number | null;
 };
 
 export type BusinessContact = {

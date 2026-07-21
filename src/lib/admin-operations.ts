@@ -269,6 +269,17 @@ export async function setBusinessAdmin(
 
   if (!result.meta.changes) return null;
 
+  // If admin is removed from the business, drop admin on all its team members
+  // so re-granting business admin later does not silently revive old access.
+  if (!isAdmin) {
+    await db
+      .prepare(
+        "UPDATE business_members SET is_admin = 0 WHERE business_id = ? AND is_admin = 1",
+      )
+      .bind(targetBusinessId)
+      .run();
+  }
+
   return db
     .prepare(`SELECT ${BUSINESS_COLUMNS} FROM businesses WHERE id = ?`)
     .bind(targetBusinessId)

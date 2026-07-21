@@ -2952,6 +2952,28 @@ textarea.input-field {
   color: var(--coral-600);
 }
 
+.team-member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.team-member-admin-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: var(--blue-100);
+  color: var(--navy-800);
+  vertical-align: middle;
+}
+
 .team-add-form {
   display: grid;
   gap: 12px;

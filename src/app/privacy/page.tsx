@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         <li>Use the BizWatch website or application.</li>
       </ul>
       <p>
-        We may also receive relevant information from other approved businesses,
+        We may also receive relevant information from other registered businesses,
         witnesses, administrators or authorities.
       </p>
 
@@ -57,7 +57,7 @@ export default function PrivacyPage() {
       <ul>
         <li>Assess and manage business registrations.</li>
         <li>Provide and administer the BizWatch service.</li>
-        <li>Display relevant reports and alerts to approved businesses.</li>
+        <li>Display relevant reports and alerts to registered businesses.</li>
         <li>Identify recurring incidents and local patterns.</li>
         <li>Review, moderate and investigate submitted content.</li>
         <li>Communicate with users about reports, alerts and their accounts.</li>
@@ -69,9 +69,9 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>Sharing within BizWatch</h2>
-      <p>BizWatch is a private network for approved businesses.</p>
+      <p>BizWatch is a private network for registered businesses.</p>
       <p>
-        Reports, alerts and business discussions may be visible to other approved
+        Reports, alerts and business discussions may be visible to other registered
         businesses. Depending on the report, this may include incident details, an
         approximate or exact location, descriptions and supporting material.
       </p>

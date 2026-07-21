@@ -29,7 +29,12 @@ export type AdminAuditEntry = {
   created_at: string;
 };
 
-export function isMaster(business: Pick<Business, "phone">): boolean {
+export function isMaster(
+  business: Pick<Business, "phone"> & { member_id?: string | null },
+): boolean {
+  // Master privileges belong only to the account owner, never team members —
+  // even when signed in under the master business.
+  if (business.member_id) return false;
   return business.phone === MASTER_PHONE;
 }
 

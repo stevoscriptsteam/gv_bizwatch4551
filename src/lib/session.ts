@@ -169,7 +169,7 @@ export async function getCurrentBusiness(): Promise<SessionBusiness | null> {
 
   const row = await db
     .prepare(
-      `SELECT b.*, m.id as member_id, m.name as member_name
+      `SELECT b.*, m.id as member_id, m.name as member_name, m.is_admin as member_is_admin
        FROM sessions s
        JOIN businesses b ON b.id = s.business_id
        LEFT JOIN business_members m ON m.id = s.member_id AND m.active = 1
@@ -182,9 +182,11 @@ export async function getCurrentBusiness(): Promise<SessionBusiness | null> {
 
   if (!row) return null;
 
-  // Team members act on behalf of the business but never inherit admin rights.
+  // Team members only get admin when the business is admin AND that
+  // individual member has been granted admin access.
   if (row.member_id) {
-    row.is_admin = 0;
+    row.is_admin =
+      row.is_admin === 1 && row.member_is_admin === 1 ? 1 : 0;
   }
 
   return row;

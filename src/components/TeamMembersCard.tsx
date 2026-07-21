@@ -8,22 +8,28 @@ type TeamMember = {
   id: string;
   name: string;
   phone: string;
+  is_admin: number;
 };
 
 export function TeamMembersCard({
   businessName,
   initialMembers,
   maxMembers,
+  canGrantAdmin = false,
 }: {
   businessName: string;
   initialMembers: TeamMember[];
   maxMembers: number;
+  canGrantAdmin?: boolean;
 }) {
   const [members, setMembers] = useState<TeamMember[]>(initialMembers);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  // Default off — admin must be granted deliberately per person.
+  const [isAdmin, setIsAdmin] = useState(false);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -37,7 +43,11 @@ export function TeamMembersCard({
     const res = await fetch("/api/team", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone }),
+      body: JSON.stringify({
+        name,
+        phone,
+        isAdmin: canGrantAdmin ? isAdmin : false,
+      }),
     });
 
     const data = (await res.json()) as { error?: string; member?: TeamMember };
@@ -55,14 +65,50 @@ export function TeamMembersCard({
     );
     setName("");
     setPhone("");
+    setIsAdmin(false);
     setNotice(
       `${data.member.name} added. They can now sign in with their own mobile number.`,
     );
   }
 
+  async function handleToggleAdmin(member: TeamMember) {
+    if (togglingId || !canGrantAdmin) return;
+    const next = member.is_admin !== 1;
+    setTogglingId(member.id);
+    setError("");
+    setNotice("");
+
+    const res = await fetch(`/api/team/${member.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isAdmin: next }),
+    });
+
+    const data = (await res.json()) as { error?: string; member?: TeamMember };
+    setTogglingId(null);
+
+    if (!res.ok || !data.member) {
+      setError(data.error ?? "Could not update admin access.");
+      return;
+    }
+
+    setMembers((prev) =>
+      prev.map((m) => (m.id === member.id ? { ...m, is_admin: data.member!.is_admin } : m)),
+    );
+    setNotice(
+      next
+        ? `${member.name} can now access the admin panel.`
+        : `Admin access removed from ${member.name}.`,
+    );
+  }
+
   async function handleRemove(member: TeamMember) {
     if (removingId) return;
-    if (!window.confirm(`Remove ${member.name} from ${businessName}? They will be signed out and can no longer sign in.`)) {
+    if (
+      !window.confirm(
+        `Remove ${member.name} from ${businessName}? They will be signed out and can no longer sign in.`,
+      )
+    ) {
       return;
     }
 
@@ -91,9 +137,11 @@ export function TeamMembersCard({
         </h2>
         <p className="form-hint">
           Add staff so they can sign in with their own mobile number. They can
-          report and comment on behalf of {businessName}, shown as
-          {" "}
+          report and comment on behalf of {businessName}, shown as{" "}
           <strong>Name ({businessName})</strong>.
+          {canGrantAdmin
+            ? " You can also give individual team members admin access."
+            : null}
         </p>
       </div>
 
@@ -108,17 +156,36 @@ export function TeamMembersCard({
                 <span className="team-member-name">
                   {member.name}{" "}
                   <span className="team-member-business">({businessName})</span>
+                  {canGrantAdmin && member.is_admin === 1 ? (
+                    <span className="team-member-admin-badge">Admin</span>
+                  ) : null}
                 </span>
                 <span className="team-member-phone">{member.phone}</span>
               </span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm team-member-remove"
-                onClick={() => void handleRemove(member)}
-                disabled={removingId === member.id}
-              >
-                {removingId === member.id ? "Removing…" : "Remove"}
-              </button>
+              <span className="team-member-actions">
+                {canGrantAdmin ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => void handleToggleAdmin(member)}
+                    disabled={togglingId === member.id}
+                  >
+                    {togglingId === member.id
+                      ? "Updating…"
+                      : member.is_admin === 1
+                        ? "Remove admin"
+                        : "Make admin"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm team-member-remove"
+                  onClick={() => void handleRemove(member)}
+                  disabled={removingId === member.id}
+                >
+                  {removingId === member.id ? "Removing…" : "Remove"}
+                </button>
+              </span>
             </li>
           ))}
         </ul>
@@ -161,6 +228,16 @@ export function TeamMembersCard({
               />
             </div>
           </div>
+          {canGrantAdmin ? (
+            <label className="profile-checkbox-label">
+              <input
+                type="checkbox"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+              />
+              <span>Give this person admin access</span>
+            </label>
+          ) : null}
           <button type="submit" className="btn btn-secondary" disabled={adding}>
             {adding ? "Adding…" : "Add team member"}
           </button>

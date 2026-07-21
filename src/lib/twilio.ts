@@ -11,9 +11,10 @@ export async function sendSms(
 ): Promise<SendSmsResult> {
   const env = await getEnv();
 
-  const sid = env.TWILIO_ACCOUNT_SID;
-  const token = env.TWILIO_AUTH_TOKEN;
-  const from = env.TWILIO_FROM_NUMBER;
+  // Prefer Worker secrets/bindings; fall back to process.env for local/OpenNext.
+  const sid = env.TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID;
+  const token = env.TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN;
+  const from = env.TWILIO_FROM_NUMBER || process.env.TWILIO_FROM_NUMBER;
 
   if (!sid || !token || !from) {
     return { ok: false, error: "Twilio is not configured." };

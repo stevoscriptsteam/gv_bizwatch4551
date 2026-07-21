@@ -11,6 +11,7 @@ export type TeamMember = {
   business_id: string;
   name: string;
   phone: string;
+  is_admin: number;
   created_at: string;
 };
 
@@ -58,7 +59,7 @@ export async function getActiveMemberByPhone(
   const db = await getDb();
   return db
     .prepare(
-      `SELECT id, business_id, name, phone, created_at
+      `SELECT id, business_id, name, phone, is_admin, created_at
        FROM business_members WHERE phone = ? AND active = 1 LIMIT 1`,
     )
     .bind(phone)
@@ -69,7 +70,7 @@ export async function listMembers(businessId: string): Promise<TeamMember[]> {
   const db = await getDb();
   const result = await db
     .prepare(
-      `SELECT id, business_id, name, phone, created_at
+      `SELECT id, business_id, name, phone, is_admin, created_at
        FROM business_members
        WHERE business_id = ? AND active = 1
        ORDER BY name COLLATE NOCASE ASC`,
@@ -82,7 +83,7 @@ export async function listMembers(businessId: string): Promise<TeamMember[]> {
 
 export async function addMember(
   businessId: string,
-  input: { name: string; phone: string },
+  input: { name: string; phone: string; isAdmin?: boolean },
 ): Promise<{ ok: true; member: TeamMember } | { ok: false; error: string }> {
   const name = input.name.trim();
   if (!name) {
@@ -121,6 +122,7 @@ export async function addMember(
     };
   }
 
+  const isAdmin = input.isAdmin ? 1 : 0;
   const db = await getDb();
 
   // Rows are soft-deleted on removal (to keep comment attribution), so the
@@ -141,19 +143,20 @@ export async function addMember(
       await db
         .prepare(
           `UPDATE business_members
-           SET business_id = ?, name = ?, active = 1, created_at = datetime('now')
+           SET business_id = ?, name = ?, is_admin = ?, active = 1,
+               created_at = datetime('now')
            WHERE id = ?`,
         )
-        .bind(businessId, name, id)
+        .bind(businessId, name, isAdmin, id)
         .run();
     } else {
       id = generateId("member");
       await db
         .prepare(
-          `INSERT INTO business_members (id, business_id, name, phone)
-           VALUES (?, ?, ?, ?)`,
+          `INSERT INTO business_members (id, business_id, name, phone, is_admin)
+           VALUES (?, ?, ?, ?, ?)`,
         )
-        .bind(id, businessId, name, phone)
+        .bind(id, businessId, name, phone, isAdmin)
         .run();
     }
   } catch {
@@ -162,7 +165,7 @@ export async function addMember(
 
   const member = await db
     .prepare(
-      `SELECT id, business_id, name, phone, created_at
+      `SELECT id, business_id, name, phone, is_admin, created_at
        FROM business_members WHERE id = ?`,
     )
     .bind(id)
@@ -175,6 +178,31 @@ export async function addMember(
   return { ok: true, member };
 }
 
+export async function setMemberAdmin(
+  businessId: string,
+  memberId: string,
+  isAdmin: boolean,
+): Promise<TeamMember | null> {
+  const db = await getDb();
+  const result = await db
+    .prepare(
+      `UPDATE business_members SET is_admin = ?
+       WHERE id = ? AND business_id = ? AND active = 1`,
+    )
+    .bind(isAdmin ? 1 : 0, memberId, businessId)
+    .run();
+
+  if (!result.meta.changes) return null;
+
+  return db
+    .prepare(
+      `SELECT id, business_id, name, phone, is_admin, created_at
+       FROM business_members WHERE id = ?`,
+    )
+    .bind(memberId)
+    .first<TeamMember>();
+}
+
 export async function removeMember(
   businessId: string,
   memberId: string,
@@ -182,7 +210,7 @@ export async function removeMember(
   const db = await getDb();
   const result = await db
     .prepare(
-      `UPDATE business_members SET active = 0
+      `UPDATE business_members SET active = 0, is_admin = 0
        WHERE id = ? AND business_id = ? AND active = 1`,
     )
     .bind(memberId, businessId)

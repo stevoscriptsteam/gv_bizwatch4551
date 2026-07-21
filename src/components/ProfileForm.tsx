@@ -109,7 +109,7 @@ export function ProfileForm({
           </span>
         </label>
         <p className="form-hint">
-          Other approved businesses can see your business name, suburb and phone number
+          Other registered businesses can see your business name, suburb and phone number
           when this is enabled. You can turn this off at any time.
         </p>
       </fieldset>

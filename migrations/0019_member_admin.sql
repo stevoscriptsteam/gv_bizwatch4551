@@ -1,0 +1,1 @@
+ALTER TABLE business_members ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;

@@ -60,7 +60,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="card card-shadow space-y-4" noValidate>
       <p className="supporting-text">
-        Register your business to apply for access. Only approved businesses in postcode
+        Register your business to apply for access. Only registered businesses in postcode
         4551 can sign in, submit reports and receive local alerts.
       </p>
 

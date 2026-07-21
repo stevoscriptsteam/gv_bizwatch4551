@@ -25,7 +25,7 @@ export function ServiceAreaSection() {
       </h2>
       <p className="supporting-text" style={{ marginBottom: 24, maxWidth: "720px" }}>
         The Biz Watchzone covers postcode 4551 on the Sunshine Coast. Access to reporting
-        and alerts is limited to approved businesses within this area.
+        and alerts is limited to registered businesses within this area.
       </p>
       <ServiceAreaMap />
     </section>

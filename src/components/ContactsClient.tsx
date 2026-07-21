@@ -52,7 +52,7 @@ export function ContactsClient() {
     <div className="container-content">
       <PageHeader
         title="Business contacts"
-        description="Approved BizWatch members who have chosen to share their contact details with other businesses."
+        description="Registered BizWatch members who have chosen to share their contact details with other businesses."
       />
 
       <EmergencyNotice />

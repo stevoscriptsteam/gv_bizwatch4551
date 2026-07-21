@@ -10,7 +10,7 @@ export default function SignInPage() {
       <div className="mx-auto max-w-lg">
         <PageHeader
           title="Sign in"
-          description="Approved businesses in postcode 4551 can sign in with their registered mobile number."
+          description="Registered businesses in postcode 4551 can sign in with their mobile number."
         />
         <EmergencyNotice />
         <div className="card card-shadow mt-6">

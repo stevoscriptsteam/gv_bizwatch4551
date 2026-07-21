@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { addMember, listMembers } from "@/lib/members";
+import { isAdmin } from "@/lib/admin";
 import { getCurrentBusiness } from "@/lib/session";
 
 export async function GET() {
@@ -25,10 +26,19 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as { name?: string; phone?: string };
+  const body = (await request.json()) as {
+    name?: string;
+    phone?: string;
+    isAdmin?: boolean;
+  };
+
+  // Only admin businesses can grant admin to team members.
+  const grantAdmin = isAdmin(business) && body.isAdmin === true;
+
   const result = await addMember(business.id, {
     name: body.name ?? "",
     phone: body.phone ?? "",
+    isAdmin: grantAdmin,
   });
 
   if (!result.ok) {

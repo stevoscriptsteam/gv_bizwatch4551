@@ -12,7 +12,7 @@ export default function TermsPage() {
       <h2>1. About BizWatch</h2>
       <p>
         BizWatch is a private incident-reporting and local safety-information service for
-        approved businesses in the 4551 area.
+        registered businesses in the 4551 area.
       </p>
       <p>BizWatch is operated by GV Integrated Solutions, ABN 58 261 360 091.</p>
       <p>
@@ -91,7 +91,7 @@ export default function TermsPage() {
 
       <h2>6. Business discussions</h2>
       <p>
-        Business discussions are visible only to approved BizWatch users and authorised
+        Business discussions are visible only to registered BizWatch users and authorised
         administrators.
       </p>
       <p>
