@@ -14,7 +14,7 @@ function StaticPage({
     <div className="container-content">
       <div className="container-reading">
         <PageHeader title={title} description={description} />
-        <div className="prose-supporting space-y-4">{children}</div>
+        <div className="article-prose mt-6">{children}</div>
       </div>
     </div>
   );
@@ -23,17 +23,70 @@ function StaticPage({
 export default function AboutPage() {
   return (
     <StaticPage
-      title="About BizWatch"
+      title="See it. Report it. Every report counts."
       description="A private community safety reporting service for registered businesses in Caloundra and postcode 4551."
     >
-      <p className="supporting-text">
-      BizWatch is a private community safety network for registered businesses across Caloundra and the 4551 area.
-
-  It gives local businesses a simple way to report incidents, share relevant information and stay informed about issues affecting nearby businesses. By bringing this information together, BizWatch can help identify repeat behaviour and emerging local patterns.
-
-      BizWatch is not an emergency service and does not replace reporting crime to Queensland Police. If someone is in immediate danger, call Triple Zero (000).
+      <p>
+        If you&apos;ve experienced theft, vandalism, threatening behaviour or suspicious
+        activity, please report it to Queensland Police through{" "}
+        <a
+          href="https://www.police.qld.gov.au/policelink-reporting"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Policelink
+        </a>{" "}
+        or call{" "}
+        <a href="tel:131444">131 444</a>. If it is happening now or someone is in immediate
+        danger, call <a href="tel:000">000</a>.
       </p>
-      <div className="mt-4 flex flex-wrap gap-3">
+
+      <p>
+        BizWatch 4551 does not replace reporting to police. It was created as a faster way for
+        local businesses to communicate with one another about concerning, unacceptable or
+        disruptive behaviour occurring across our business community.
+      </p>
+
+      <p>
+        After lodging a police report, we encourage businesses to also record the incident
+        through BizWatch 4551.
+      </p>
+
+      <p>By bringing this information together, we can better identify:</p>
+      <ul>
+        <li>recurring hotspots</li>
+        <li>patterns in the types and timing of incidents</li>
+        <li>areas that may benefit from improved lighting, CCTV or grant funding</li>
+        <li>
+          locations where landlords, property managers or relevant authorities need to be made
+          aware
+        </li>
+        <li>businesses that may need support or a simple check-in following an incident</li>
+      </ul>
+
+      <p>
+        We all have a vested interest in keeping our businesses, our staff, our customers and
+        our wider community safe.
+      </p>
+
+      <p>
+        Caloundra is experiencing unprecedented growth. We want that growth to continue while
+        protecting the place we love, care for and feel safe in.
+      </p>
+
+      <p>
+        As discussed again at last night&apos;s meeting, our aim is to disrupt this behaviour.
+        It has no place in our community.
+      </p>
+
+      <p>
+        The more informed and connected we are, the better equipped we are to respond, support
+        one another and advocate for practical solutions.
+      </p>
+
+      <p>As one, we are stronger.</p>
+
+      <div className="mt-8 flex flex-wrap gap-3 not-prose">
         <Link href="/register" className="btn btn-primary inline-flex">
           Register your business
         </Link>
