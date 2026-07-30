@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import type { Crime } from "@/lib/types";
-import { formatReferenceNumber } from "@/lib/types";
+import { formatReferenceNumber, formatReporterLabel } from "@/lib/types";
 import {
   POSTCODE_4551_CENTER,
   POSTCODE_4551_POLYGON,
@@ -30,11 +30,21 @@ function formatDate(iso: string) {
   }).format(new Date(iso));
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export function ReportsMap({ crimes }: ReportsMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<LayerGroup | null>(null);
   const leafletRef = useRef<LeafletModule | null>(null);
+  const didInitialFitRef = useRef(false);
+  const markerSignatureRef = useRef<string>("");
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
@@ -80,6 +90,8 @@ export function ReportsMap({ crimes }: ReportsMapProps) {
 
     return () => {
       mounted = false;
+      didInitialFitRef.current = false;
+      markerSignatureRef.current = "";
       setMapReady(false);
       destroyLeafletMap(mapRef.current);
       mapRef.current = null;
@@ -94,8 +106,6 @@ export function ReportsMap({ crimes }: ReportsMapProps) {
     const L = leafletRef.current;
     if (!mapReady || !map || !markersLayer || !L) return;
 
-    markersLayer.clearLayers();
-
     const mappable = crimes
       .map((crime) => {
         const coords = getCrimeCoordinates(crime);
@@ -104,39 +114,59 @@ export function ReportsMap({ crimes }: ReportsMapProps) {
       })
       .filter(Boolean) as { crime: Crime; coords: [number, number] }[];
 
-    for (const { crime, coords } of mappable) {
-      const categoryId = getCategoryId(crime.category_id, crime.crime_type);
-      const icon = L.divIcon({
-        className: "incident-marker-wrap",
-        html: incidentMarkerHtml(categoryId),
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-      });
+    const markerSignature = mappable
+      .map(
+        ({ crime, coords }) =>
+          `${crime.id}:${coords[0]}:${coords[1]}:${crime.title}:${crime.crime_type}:${crime.address ?? ""}:${crime.location}`,
+      )
+      .join("|");
 
-      const displayAddress = crime.address || crime.location;
-      L.marker(coords, { icon })
-        .addTo(markersLayer)
-        .bindPopup(
-          `<div class="incident-popup">
-            <p class="incident-popup-category">${crime.crime_type}</p>
-            <p class="incident-popup-title">${crime.title.replace(/</g, "&lt;")}</p>
-            <p class="incident-popup-address">${displayAddress.replace(/</g, "&lt;")}</p>
-            <p class="incident-popup-meta">${formatDate(crime.created_at)} · ${formatReferenceNumber(crime.id)}</p>
-            <a href="/reports?id=${encodeURIComponent(crime.id)}" class="incident-popup-link">View report</a>
-          </div>`,
-        );
+    if (markerSignatureRef.current !== markerSignature) {
+      markerSignatureRef.current = markerSignature;
+      markersLayer.clearLayers();
+
+      for (const { crime, coords } of mappable) {
+        const categoryId = getCategoryId(crime.category_id, crime.crime_type);
+        const icon = L.divIcon({
+          className: "incident-marker-wrap",
+          html: incidentMarkerHtml(categoryId),
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        });
+
+        const displayAddress = crime.address || crime.location;
+        const reporter = formatReporterLabel(crime);
+        L.marker(coords, { icon })
+          .addTo(markersLayer)
+          .bindPopup(
+            `<div class="incident-popup">
+              <p class="incident-popup-category">${escapeHtml(crime.crime_type)}</p>
+              <p class="incident-popup-title">${escapeHtml(crime.title)}</p>
+              <p class="incident-popup-address">${escapeHtml(displayAddress)}</p>
+              <p class="incident-popup-meta">Reported by ${escapeHtml(reporter)}</p>
+              <p class="incident-popup-meta">${formatDate(crime.created_at)} · ${formatReferenceNumber(crime.id)}</p>
+              <a href="/reports?id=${encodeURIComponent(crime.id)}" class="incident-popup-link">View report</a>
+            </div>`,
+          );
+      }
     }
+
+    // Fit once on first load only. Later crime refreshes / engagement updates
+    // must not yank the viewport back while the user is panning or viewing a popup.
+    if (didInitialFitRef.current) return;
 
     const fitOptions = { animate: false, padding: [24, 24] as [number, number] };
 
     if (mappable.length > 0) {
       const bounds = L.latLngBounds(mappable.map(({ coords }) => coords));
       map.fitBounds(bounds.pad(0.15), { ...fitOptions, maxZoom: 14 });
+      didInitialFitRef.current = true;
     } else {
       map.fitBounds(L.polygon(POSTCODE_4551_POLYGON).getBounds(), {
         ...fitOptions,
         maxZoom: 13,
       });
+      didInitialFitRef.current = true;
     }
   }, [crimes, mapReady]);
 

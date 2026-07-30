@@ -24,7 +24,7 @@ export type AdminComment = {
 };
 
 const BUSINESS_COLUMNS =
-  "id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, created_at";
+  "id, business_name, phone, email, suburb, active, is_admin, contact_list_visible, referral_source, referral_other, created_at";
 
 const COMMENT_SELECT: Record<"report" | "article", string> = {
   report: `SELECT rc.id, rc.body, rc.created_at, rc.business_id, rc.deleted_at,
@@ -55,9 +55,11 @@ export async function listAdminReports(archivedOnly?: boolean): Promise<AdminRep
 
   const result = await db
     .prepare(
-      `SELECT c.*, b.business_name
+      `SELECT c.*, b.business_name, m.name as member_name,
+              (SELECT COUNT(*) FROM report_flags rf WHERE rf.crime_id = c.id) as flag_count
        FROM crimes c
        JOIN businesses b ON b.id = c.business_id
+       LEFT JOIN business_members m ON m.id = c.member_id
        WHERE c.deleted_at IS NULL AND ${filter}
        ORDER BY c.created_at DESC
        LIMIT 200`,
@@ -78,7 +80,10 @@ export async function setReportArchived(
     const result = await db
       .prepare(
         `UPDATE crimes
-         SET archived_at = datetime('now'), archived_by = ?, updated_at = datetime('now')
+         SET archived_at = datetime('now'),
+             archived_by = ?,
+             archive_reason = 'admin',
+             updated_at = datetime('now')
          WHERE id = ? AND deleted_at IS NULL`,
       )
       .bind(adminId, crimeId)
@@ -89,7 +94,10 @@ export async function setReportArchived(
     const result = await db
       .prepare(
         `UPDATE crimes
-         SET archived_at = NULL, archived_by = NULL, updated_at = datetime('now')
+         SET archived_at = NULL,
+             archived_by = NULL,
+             archive_reason = NULL,
+             updated_at = datetime('now')
          WHERE id = ? AND deleted_at IS NULL`,
       )
       .bind(crimeId)
@@ -100,9 +108,10 @@ export async function setReportArchived(
 
   return db
     .prepare(
-      `SELECT c.*, b.business_name
+      `SELECT c.*, b.business_name, m.name as member_name
        FROM crimes c
        JOIN businesses b ON b.id = c.business_id
+       LEFT JOIN business_members m ON m.id = c.member_id
        WHERE c.id = ?`,
     )
     .bind(crimeId)

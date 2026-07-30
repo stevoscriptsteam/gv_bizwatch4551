@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Crime } from "@/lib/types";
 import { ReportFeedCard } from "@/components/ReportFeedCard";
 import { EmergencyNotice } from "@/components/ui/EmergencyNotice";
+// import { GvItPromoBanner } from "@/components/GvItPromoBanner";
 
 const ReportsMap = dynamic(
   () => import("@/components/ReportsMap").then((m) => m.ReportsMap),
@@ -93,6 +94,12 @@ export function DashboardClient() {
             </div>
           )}
         </section>
+
+      {/* GV IT promo banner temporarily disabled
+      <div className="mt-8">
+        <GvItPromoBanner />
+      </div>
+      */}
     </div>
   );
 }

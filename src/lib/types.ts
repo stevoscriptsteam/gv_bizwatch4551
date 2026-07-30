@@ -68,6 +68,9 @@ export type Business = {
   active: number;
   is_admin?: number;
   contact_list_visible?: number;
+  referral_source?: string | null;
+  referral_other?: string | null;
+  terms_accepted_at?: string | null;
   created_at: string;
 };
 
@@ -199,6 +202,7 @@ export type ArticleEngagementState = {
 export type Crime = {
   id: string;
   business_id: string;
+  member_id?: string | null;
   title: string;
   description: string;
   crime_type: string;
@@ -215,12 +219,35 @@ export type Crime = {
   deleted_at?: string | null;
   archived_at?: string | null;
   archived_by?: string | null;
+  archive_reason?: string | null;
   business_name?: string;
+  member_name?: string | null;
   comment_count?: number;
   reactions?: ReactionCounts;
   user_reaction?: ReactionType | null;
   is_owner?: boolean;
+  flag_count?: number;
+  user_has_flagged?: boolean;
 };
+
+/** Display label for who submitted a report, e.g. "John (Caloundra Bakery)". */
+export function formatReporterLabel(crime: {
+  business_name?: string | null;
+  member_name?: string | null;
+}): string {
+  const business = crime.business_name?.trim();
+  const member = crime.member_name?.trim();
+  if (member && business) return `${member} (${business})`;
+  return business || member || "Unknown business";
+}
+
+/** Community flags needed before a report is auto-archived for admin review. */
+export const REPORT_FLAG_AUTO_ARCHIVE_THRESHOLD = 3;
+
+export const REPORT_FLAG_DISCLAIMER =
+  "This report has been flagged as potentially false or fraudulent by other businesses. Treat the information with caution until it has been reviewed.";
+
+export type ArchiveReason = "admin" | "community_flags";
 
 export function emptyReactionCounts(): ReactionCounts {
   return {
@@ -288,6 +315,27 @@ export const POSTCODE_4551_SUBURBS = [
   "Meridan Plains",
   "Kawana Waters",
 ] as const;
+
+export const REFERRAL_SOURCES = [
+  { id: "social_media", label: "Social media" },
+  { id: "chamber_of_commerce", label: "Chamber of commerce" },
+  { id: "word_of_mouth", label: "Word of mouth" },
+  { id: "other", label: "Somewhere else" },
+] as const;
+
+export type ReferralSourceId = (typeof REFERRAL_SOURCES)[number]["id"];
+
+export function getReferralSourceLabel(
+  source: string | null | undefined,
+  other?: string | null,
+): string {
+  if (!source) return "—";
+  if (source === "other") {
+    const detail = other?.trim();
+    return detail ? `Somewhere else: ${detail}` : "Somewhere else";
+  }
+  return REFERRAL_SOURCES.find((item) => item.id === source)?.label ?? source;
+}
 
 export function formatReferenceNumber(crimeId: string): string {
   const short = crimeId.replace("crime-", "").slice(0, 8).toUpperCase();

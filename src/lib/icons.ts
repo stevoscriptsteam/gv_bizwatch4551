@@ -74,6 +74,7 @@ export {
   faHouse,
   faShield,
   faBell,
+  faBuilding,
   faFileLines,
   faShieldHalved,
   faMagnifyingGlass,

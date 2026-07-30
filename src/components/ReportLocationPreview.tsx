@@ -16,9 +16,11 @@ export function ReportLocationPreview({ crime, markerColor }: ReportLocationPrev
   const mapRef = useRef<LeafletMap | null>(null);
   const [visible, setVisible] = useState(false);
   const coords = getCrimeCoordinates(crime);
+  const lat = coords?.[0] ?? null;
+  const lng = coords?.[1] ?? null;
 
   useEffect(() => {
-    if (!coords || !containerRef.current) return;
+    if (lat == null || lng == null || !containerRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -32,12 +34,15 @@ export function ReportLocationPreview({ crime, markerColor }: ReportLocationPrev
 
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [coords]);
+  }, [lat, lng]);
 
   useEffect(() => {
-    if (!visible || !coords || !containerRef.current || mapRef.current) return;
+    if (!visible || lat == null || lng == null || !containerRef.current || mapRef.current) {
+      return;
+    }
 
     let mounted = true;
+    const viewCoords: [number, number] = [lat, lng];
 
     void import("leaflet").then((L) => {
       if (!mounted || !containerRef.current || mapRef.current) return;
@@ -53,7 +58,7 @@ export function ReportLocationPreview({ crime, markerColor }: ReportLocationPrev
         keyboard: false,
         fadeAnimation: false,
         zoomAnimation: false,
-      }).setView(coords, 15);
+      }).setView(viewCoords, 15);
 
       L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
@@ -67,7 +72,7 @@ export function ReportLocationPreview({ crime, markerColor }: ReportLocationPrev
         iconAnchor: [7, 7],
       });
 
-      L.marker(coords, { icon }).addTo(map);
+      L.marker(viewCoords, { icon }).addTo(map);
       mapRef.current = map;
     });
 
@@ -76,7 +81,7 @@ export function ReportLocationPreview({ crime, markerColor }: ReportLocationPrev
       destroyLeafletMap(mapRef.current);
       mapRef.current = null;
     };
-  }, [visible, coords, markerColor]);
+  }, [visible, lat, lng, markerColor]);
 
   if (!coords) return null;
 

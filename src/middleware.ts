@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPrefixes = ["/dashboard", "/report", "/profile", "/reports", "/my-reports", "/safety", "/contacts", "/admin"];
+const protectedPrefixes = ["/dashboard", "/report", "/profile", "/team", "/reports", "/my-reports", "/safety", "/contacts", "/admin", "/updates"];
 
 export function middleware(request: NextRequest) {
   const session = request.cookies.get("bizwatch_session");
@@ -21,5 +21,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/report/:path*", "/profile/:path*", "/reports/:path*", "/my-reports/:path*", "/safety", "/safety/:path*", "/contacts/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/report/:path*", "/profile/:path*", "/team", "/team/:path*", "/reports/:path*", "/my-reports/:path*", "/safety", "/safety/:path*", "/contacts/:path*", "/admin/:path*", "/updates", "/updates/:path*"],
 };

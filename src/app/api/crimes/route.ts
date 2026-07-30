@@ -20,8 +20,7 @@ export async function GET(request: Request) {
 
   const crimes = await listCrimesForArea();
   const enriched = await enrichCrimesWithEngagement(crimes, business.id);
-  const publicCrimes = enriched.map(({ business_name: _removed, ...crime }) => crime);
-  return NextResponse.json({ crimes: publicCrimes });
+  return NextResponse.json({ crimes: enriched });
 }
 
 export async function POST(request: Request) {
@@ -66,6 +65,7 @@ export async function POST(request: Request) {
 
   const crimeId = await createCrime({
     businessId: business.id,
+    memberId: business.member_id ?? null,
     title: body.title.trim(),
     description: body.description.trim(),
     crimeType: body.crimeType,

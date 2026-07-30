@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { UpdatesMenuLink } from "@/components/UpdatesMenuLink";
 
 type NavLink = { href: string; label: string };
 
@@ -154,6 +155,10 @@ export function SiteHeaderNav({
               >
                 Your reports
               </Link>
+              <UpdatesMenuLink
+                className="site-header-drawer-link"
+                onNavigate={() => setOpen(false)}
+              />
               <Link
                 href="/profile"
                 className="site-header-drawer-link"
@@ -161,6 +166,15 @@ export function SiteHeaderNav({
               >
                 Edit profile
               </Link>
+              {!memberName ? (
+                <Link
+                  href="/team"
+                  className="site-header-drawer-link"
+                  onClick={() => setOpen(false)}
+                >
+                  Manage team
+                </Link>
+              ) : null}
               {isAdmin ? (
                 <Link
                   href="/admin"

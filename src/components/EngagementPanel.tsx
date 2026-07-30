@@ -207,20 +207,21 @@ export function EngagementPanel({
     [onUpdate],
   );
 
-  const loadComments = useCallback(async () => {
-    setCommentsLoading(true);
+  const loadComments = useCallback(async (opts?: { quiet?: boolean }) => {
+    if (!opts?.quiet) {
+      setCommentsLoading(true);
+    }
     setError(null);
     const res = await fetch(`${apiBasePath}/comments`);
     if (res.ok) {
       const data = (await res.json()) as { comments: EngagementComment[] };
       setComments(data.comments);
       setCommentCount(data.comments.length);
-      syncEngagement({ comment_count: data.comments.length });
     } else {
       setError(commentsLabels.loadError);
     }
     setCommentsLoading(false);
-  }, [apiBasePath, commentsLabels.loadError, syncEngagement]);
+  }, [apiBasePath, commentsLabels.loadError]);
 
   const toggleComments = useCallback(async () => {
     if (commentsAlwaysOpen) return;
@@ -234,11 +235,36 @@ export function EngagementPanel({
     }
   }, [comments.length, commentsAlwaysOpen, commentsOpen, loadComments]);
 
+  // Load once per report. Never depend on onUpdate/loadComments — those
+  // change when parent state updates and previously caused an infinite fetch loop.
   useEffect(() => {
-    if (commentsAlwaysOpen) {
-      void loadComments();
+    if (!commentsAlwaysOpen) return;
+
+    let cancelled = false;
+
+    async function loadOnce() {
+      setCommentsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${apiBasePath}/comments`);
+        if (cancelled) return;
+        if (res.ok) {
+          const data = (await res.json()) as { comments: EngagementComment[] };
+          setComments(data.comments);
+          setCommentCount(data.comments.length);
+        } else {
+          setError(commentsLabels.loadError);
+        }
+      } finally {
+        if (!cancelled) setCommentsLoading(false);
+      }
     }
-  }, [commentsAlwaysOpen, loadComments]);
+
+    void loadOnce();
+    return () => {
+      cancelled = true;
+    };
+  }, [commentsAlwaysOpen, targetId, apiBasePath, commentsLabels.loadError]);
 
   const handleReaction = async (type: string) => {
     if (reacting) return;
@@ -448,7 +474,7 @@ export function EngagementPanel({
 
       {commentsAlwaysOpen || commentsOpen ? (
         <div className="report-comments">
-          {commentsLoading ? (
+          {commentsLoading && comments.length === 0 ? (
             <p className="supporting-text">{commentsLabels.loading}</p>
           ) : comments.length === 0 ? (
             commentsAlwaysOpen ? null : (

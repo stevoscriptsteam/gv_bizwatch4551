@@ -7,9 +7,10 @@ export async function listCrimesForArea(): Promise<Crime[]> {
   const db = await getDb();
   const result = await db
     .prepare(
-      `SELECT c.*, b.business_name
+      `SELECT c.*, b.business_name, m.name as member_name
        FROM crimes c
        JOIN businesses b ON b.id = c.business_id
+       LEFT JOIN business_members m ON m.id = c.member_id
        WHERE c.postcode = '4551' AND c.deleted_at IS NULL AND c.archived_at IS NULL
        ORDER BY c.created_at DESC
        LIMIT 100`,
@@ -25,9 +26,10 @@ export async function listCrimesForBusiness(
   const db = await getDb();
   const result = await db
     .prepare(
-      `SELECT c.*, b.business_name
+      `SELECT c.*, b.business_name, m.name as member_name
        FROM crimes c
        JOIN businesses b ON b.id = c.business_id
+       LEFT JOIN business_members m ON m.id = c.member_id
        WHERE c.business_id = ? AND c.deleted_at IS NULL AND c.archived_at IS NULL
        ORDER BY c.created_at DESC`,
     )
@@ -39,6 +41,7 @@ export async function listCrimesForBusiness(
 
 export async function createCrime(input: {
   businessId: string;
+  memberId?: string | null;
   title: string;
   description: string;
   crimeType: string;
@@ -56,13 +59,14 @@ export async function createCrime(input: {
   await db
     .prepare(
       `INSERT INTO crimes
-       (id, business_id, title, description, crime_type, location, suburb, postcode,
+       (id, business_id, member_id, title, description, crime_type, location, suburb, postcode,
         address, latitude, longitude, category_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       crimeId,
       input.businessId,
+      input.memberId ?? null,
       input.title,
       input.description,
       input.crimeType,

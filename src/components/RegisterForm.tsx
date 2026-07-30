@@ -2,16 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { POSTCODE_4551_SUBURBS } from "@/lib/types";
+import { POSTCODE_4551_SUBURBS, REFERRAL_SOURCES, type ReferralSourceId } from "@/lib/types";
 
 export function RegisterForm() {
   const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [suburb, setSuburb] = useState("");
+  const [referralSource, setReferralSource] = useState<ReferralSourceId | "">("");
+  const [referralOther, setReferralOther] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  const canSubmit =
+    businessName.trim() &&
+    phone.trim() &&
+    email.trim() &&
+    suburb &&
+    referralSource &&
+    (referralSource !== "other" || referralOther.trim()) &&
+    acceptedTerms;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,7 +33,15 @@ export function RegisterForm() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ businessName, phone, email, suburb }),
+      body: JSON.stringify({
+        businessName,
+        phone,
+        email,
+        suburb,
+        referralSource,
+        referralOther: referralSource === "other" ? referralOther : undefined,
+        acceptedTerms,
+      }),
     });
 
     const data = (await res.json()) as { error?: string };
@@ -47,8 +67,8 @@ export function RegisterForm() {
           reviewed and approved.
         </p>
         <p className="supporting-text mt-3">
-          We will contact you at <strong>{email}</strong> once your registration has been
-          approved. You can then sign in with your registered mobile number.
+          We will notify you by SMS to <strong>{phone}</strong> when your registration is
+          accepted. You can then sign in with your registered mobile number.
         </p>
         <Link href="/sign-in" className="btn btn-primary mt-6 inline-flex">
           Go to sign in
@@ -95,7 +115,8 @@ export function RegisterForm() {
           required
         />
         <p id="register-phone-hint" className="form-hint">
-          This number will be used to sign in once your registration is approved.
+          This number will be used to sign in. We will also notify you by SMS when your
+          registration is accepted.
         </p>
       </div>
 
@@ -134,6 +155,75 @@ export function RegisterForm() {
         </select>
       </div>
 
+      <fieldset>
+        <legend className="form-label">
+          How did you find out about BizWatch?<span className="text-coral-600"> *</span>
+        </legend>
+        <div className="mt-2 space-y-2">
+          {REFERRAL_SOURCES.map((option) => (
+            <label key={option.id} className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="referralSource"
+                value={option.id}
+                checked={referralSource === option.id}
+                onChange={() => setReferralSource(option.id)}
+                className="h-5 w-5 accent-navy-900"
+                required
+              />
+              <span className="text-[15px]">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {referralSource === "other" ? (
+        <div>
+          <label htmlFor="referralOther" className="form-label">
+            Please tell us where<span className="text-coral-600"> *</span>
+          </label>
+          <input
+            id="referralOther"
+            type="text"
+            value={referralOther}
+            onChange={(e) => setReferralOther(e.target.value)}
+            className="input-field"
+            maxLength={200}
+            required
+          />
+        </div>
+      ) : null}
+
+      <label className="profile-checkbox-label">
+        <input
+          type="checkbox"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          required
+        />
+        <span>
+          I agree to the{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-navy-800 hover:underline"
+          >
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-navy-800 hover:underline"
+          >
+            Terms of Use
+          </Link>
+          <span className="text-coral-600"> *</span>
+        </span>
+      </label>
+
       {error ? (
         <p className="form-error" role="alert">
           {error}
@@ -142,7 +232,7 @@ export function RegisterForm() {
 
       <button
         type="submit"
-        disabled={loading || !businessName.trim() || !phone.trim() || !email.trim() || !suburb}
+        disabled={loading || !canSubmit}
         className="btn btn-primary w-full"
       >
         {loading ? "Submitting…" : "Submit registration"}

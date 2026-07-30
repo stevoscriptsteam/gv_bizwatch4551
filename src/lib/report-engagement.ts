@@ -18,14 +18,16 @@ import {
   setEngagementReaction,
   updateEngagementComment,
 } from "@/lib/engagement";
+import { enrichCrimesWithFlags } from "@/lib/report-flags";
 
 export async function getCrimeById(crimeId: string): Promise<Crime | null> {
   const db = await getDb();
   return db
     .prepare(
-      `SELECT c.*, b.business_name
+      `SELECT c.*, b.business_name, m.name as member_name
        FROM crimes c
        JOIN businesses b ON b.id = c.business_id
+       LEFT JOIN business_members m ON m.id = c.member_id
        WHERE c.id = ? AND c.deleted_at IS NULL AND c.archived_at IS NULL`,
     )
     .bind(crimeId)
@@ -91,10 +93,12 @@ export async function enrichCrimesWithEngagement(
     emptyReactionCounts,
   );
 
-  return enriched.map((crime) => ({
+  const withOwnership = enriched.map((crime) => ({
     ...crime,
     is_owner: crime.business_id === viewerBusinessId,
   }));
+
+  return enrichCrimesWithFlags(withOwnership, viewerBusinessId);
 }
 
 export async function listComments(

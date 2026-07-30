@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import type { AdminAuditEntry } from "@/lib/admin";
 import type { AdminComment, AdminReport } from "@/lib/admin-operations";
 import type { Business } from "@/lib/types";
+import { formatReporterLabel, getReferralSourceLabel } from "@/lib/types";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { PageHeader } from "@/components/ui/PageHeader";
 
-type AdminTab = "reports" | "comments" | "businesses" | "audit";
+type AdminTab = "reports" | "comments" | "requests" | "businesses" | "audit";
 
 type AdminClientProps = {
   isMaster: boolean;
@@ -30,6 +31,7 @@ export function AdminClient({ isMaster }: AdminClientProps) {
   const [comments, setComments] = useState<AdminComment[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [auditLog, setAuditLog] = useState<AdminAuditEntry[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const [newBusiness, setNewBusiness] = useState({
     businessName: "",
@@ -39,6 +41,7 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     message: "",
   });
   const [addingBusiness, setAddingBusiness] = useState(false);
+  const [actingBusinessId, setActingBusinessId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadReports = useCallback(async () => {
@@ -68,17 +71,20 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     setLoading(false);
   }, []);
 
-  const loadBusinesses = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadBusinesses = useCallback(async (opts?: { quiet?: boolean }) => {
+    if (!opts?.quiet) {
+      setLoading(true);
+      setError(null);
+    }
     const res = await fetch("/api/admin/businesses");
     if (res.ok) {
       const data = (await res.json()) as { businesses: Business[] };
       setBusinesses(data.businesses);
-    } else {
+      setPendingCount(data.businesses.filter((b) => b.active !== 1).length);
+    } else if (!opts?.quiet) {
       setError("Could not load businesses.");
     }
-    setLoading(false);
+    if (!opts?.quiet) setLoading(false);
   }, []);
 
   const loadAuditLog = useCallback(async () => {
@@ -94,17 +100,27 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     setLoading(false);
   }, []);
 
+  // Keep the Requests badge count fresh even when that tab is not open.
+  useEffect(() => {
+    void loadBusinesses({ quiet: true });
+  }, [loadBusinesses]);
+
   useEffect(() => {
     if (tab === "reports") void loadReports();
     if (tab === "comments") void loadComments();
-    if (tab === "businesses") void loadBusinesses();
+    if (tab === "requests" || tab === "businesses") void loadBusinesses();
     if (tab === "audit") void loadAuditLog();
   }, [tab, loadReports, loadComments, loadBusinesses, loadAuditLog]);
 
   async function toggleArchive(report: AdminReport) {
     const archived = !report.archived_at;
     const label = archived ? "archive" : "restore";
-    if (!window.confirm(`${archived ? "Archive" : "Restore"} "${report.title}"?`)) return;
+    const confirmMessage = archived
+      ? `Archive "${report.title}"?`
+      : report.archive_reason === "community_flags"
+        ? `Restore "${report.title}" to the public feed? It was auto-archived after community flags.`
+        : `Restore "${report.title}"?`;
+    if (!window.confirm(confirmMessage)) return;
 
     const res = await fetch(`/api/admin/reports/${report.id}`, {
       method: "PATCH",
@@ -134,6 +150,40 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     }
   }
 
+  async function acceptRequest(business: Business) {
+    if (
+      !window.confirm(
+        `Accept registration for ${business.business_name}? They will receive an SMS and can then sign in.`,
+      )
+    ) {
+      return;
+    }
+
+    setActingBusinessId(business.id);
+    setError(null);
+    setNotice(null);
+
+    const res = await fetch("/api/admin/businesses", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: business.id, active: true }),
+    });
+
+    const data = (await res.json()) as { error?: string; smsSent?: boolean };
+    setActingBusinessId(null);
+
+    if (res.ok) {
+      await loadBusinesses({ quiet: true });
+      setNotice(
+        data.smsSent
+          ? `${business.business_name} accepted and notified by SMS.`
+          : `${business.business_name} accepted, but the SMS could not be sent.`,
+      );
+    } else {
+      setError(data.error ?? "Could not accept registration.");
+    }
+  }
+
   async function toggleBusinessActive(business: Business) {
     const active = business.active !== 1;
     const label = active ? "activate" : "deactivate";
@@ -145,14 +195,16 @@ export function AdminClient({ isMaster }: AdminClientProps) {
       return;
     }
 
+    setActingBusinessId(business.id);
     const res = await fetch("/api/admin/businesses", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: business.id, active }),
     });
+    setActingBusinessId(null);
 
     if (res.ok) {
-      await loadBusinesses();
+      await loadBusinesses({ quiet: tab !== "businesses" && tab !== "requests" });
     } else {
       setError(`Could not ${label} business.`);
     }
@@ -217,9 +269,13 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     setAddingBusiness(false);
   }
 
-  const tabs: { id: AdminTab; label: string }[] = [
+  const pendingRequests = businesses.filter((business) => business.active !== 1);
+  const activeBusinesses = businesses.filter((business) => business.active === 1);
+
+  const tabs: { id: AdminTab; label: string; badge?: number }[] = [
     { id: "reports", label: "Reports" },
     { id: "comments", label: "Comments" },
+    { id: "requests", label: "Requests", badge: pendingCount },
     { id: "businesses", label: "Businesses" },
     { id: "audit", label: "Audit log" },
   ];
@@ -228,7 +284,7 @@ export function AdminClient({ isMaster }: AdminClientProps) {
     <div className="container-content">
       <PageHeader
         title="Admin"
-        description="Manage reports, moderate comments, and administer business accounts."
+        description="Manage reports, moderate comments, review registration requests, and administer business accounts."
       />
 
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
@@ -242,6 +298,11 @@ export function AdminClient({ isMaster }: AdminClientProps) {
             onClick={() => setTab(item.id)}
           >
             {item.label}
+            {item.badge && item.badge > 0 ? (
+              <span className="admin-tab-badge" aria-label={`${item.badge} pending`}>
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -272,7 +333,7 @@ export function AdminClient({ isMaster }: AdminClientProps) {
                 <thead>
                   <tr>
                     <th>Title</th>
-                    <th>Business</th>
+                    <th>Reported by</th>
                     <th>Date</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -282,11 +343,21 @@ export function AdminClient({ isMaster }: AdminClientProps) {
                   {reports.map((report) => (
                     <tr key={report.id}>
                       <td>{report.title}</td>
-                      <td>{report.business_name}</td>
+                      <td>{formatReporterLabel(report)}</td>
                       <td>{formatDate(report.created_at)}</td>
                       <td>
                         {report.archived_at ? (
-                          <span className="admin-badge admin-badge--muted">Archived</span>
+                          report.archive_reason === "community_flags" ? (
+                            <span className="admin-badge admin-badge--flagged">
+                              Flagged ({report.flag_count ?? 0})
+                            </span>
+                          ) : (
+                            <span className="admin-badge admin-badge--muted">Archived</span>
+                          )
+                        ) : (report.flag_count ?? 0) > 0 ? (
+                          <span className="admin-badge admin-badge--flagged">
+                            Live · {report.flag_count} flag{(report.flag_count ?? 0) === 1 ? "" : "s"}
+                          </span>
                         ) : (
                           <span className="admin-badge admin-badge--active">Live</span>
                         )}
@@ -341,6 +412,58 @@ export function AdminClient({ isMaster }: AdminClientProps) {
                           onClick={() => void removeComment(comment)}
                         >
                           Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {tab === "requests" && !loading ? (
+        <section className="admin-panel mt-6" aria-label="Registration requests">
+          {pendingRequests.length === 0 ? (
+            <p className="supporting-text">No registration requests waiting for review.</p>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Contact</th>
+                    <th>Suburb</th>
+                    <th>How they found us</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingRequests.map((business) => (
+                    <tr key={business.id}>
+                      <td>{business.business_name}</td>
+                      <td>
+                        <div>{formatPhoneDisplay(business.phone)}</div>
+                        <div className="admin-table-excerpt">{business.email}</div>
+                      </td>
+                      <td>{business.suburb || "—"}</td>
+                      <td>
+                        {getReferralSourceLabel(
+                          business.referral_source,
+                          business.referral_other,
+                        )}
+                      </td>
+                      <td>{formatDate(business.created_at)}</td>
+                      <td className="admin-actions-cell">
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          disabled={actingBusinessId === business.id}
+                          onClick={() => void acceptRequest(business)}
+                        >
+                          {actingBusinessId === business.id ? "Accepting…" : "Accept"}
                         </button>
                       </td>
                     </tr>
@@ -435,50 +558,62 @@ export function AdminClient({ isMaster }: AdminClientProps) {
                 <tr>
                   <th>Business</th>
                   <th>Phone</th>
+                  <th>How they found us</th>
                   <th>Status</th>
                   <th>Role</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {businesses.map((business) => (
-                  <tr key={business.id}>
-                    <td>{business.business_name}</td>
-                    <td>{formatPhoneDisplay(business.phone)}</td>
-                    <td>
-                      {business.active === 1 ? (
+                {activeBusinesses.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <p className="supporting-text">No active businesses yet.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  activeBusinesses.map((business) => (
+                    <tr key={business.id}>
+                      <td>{business.business_name}</td>
+                      <td>{formatPhoneDisplay(business.phone)}</td>
+                      <td>
+                        {getReferralSourceLabel(
+                          business.referral_source,
+                          business.referral_other,
+                        )}
+                      </td>
+                      <td>
                         <span className="admin-badge admin-badge--active">Active</span>
-                      ) : (
-                        <span className="admin-badge admin-badge--muted">Inactive</span>
-                      )}
-                    </td>
-                    <td>
-                      {business.is_admin === 1 ? (
-                        <span className="admin-badge admin-badge--admin">Admin</span>
-                      ) : (
-                        <span className="admin-badge admin-badge--muted">Member</span>
-                      )}
-                    </td>
-                    <td className="admin-actions-cell">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => void toggleBusinessActive(business)}
-                      >
-                        {business.active === 1 ? "Deactivate" : "Activate"}
-                      </button>
-                      {isMaster ? (
+                      </td>
+                      <td>
+                        {business.is_admin === 1 ? (
+                          <span className="admin-badge admin-badge--admin">Admin</span>
+                        ) : (
+                          <span className="admin-badge admin-badge--muted">Member</span>
+                        )}
+                      </td>
+                      <td className="admin-actions-cell">
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
-                          onClick={() => void toggleBusinessAdmin(business)}
+                          disabled={actingBusinessId === business.id}
+                          onClick={() => void toggleBusinessActive(business)}
                         >
-                          {business.is_admin === 1 ? "Remove admin" : "Make admin"}
+                          Deactivate
                         </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
+                        {isMaster ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => void toggleBusinessAdmin(business)}
+                          >
+                            {business.is_admin === 1 ? "Remove admin" : "Make admin"}
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

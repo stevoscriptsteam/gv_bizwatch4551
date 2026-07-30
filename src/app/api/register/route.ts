@@ -7,6 +7,9 @@ export async function POST(request: Request) {
     phone?: string;
     email?: string;
     suburb?: string;
+    referralSource?: string;
+    referralOther?: string;
+    acceptedTerms?: boolean;
   };
 
   const result = await registerBusiness({
@@ -14,6 +17,9 @@ export async function POST(request: Request) {
     phone: body.phone ?? "",
     email: body.email ?? "",
     suburb: body.suburb,
+    referralSource: body.referralSource,
+    referralOther: body.referralOther,
+    acceptedTerms: body.acceptedTerms === true,
   });
 
   if (!result.ok) {

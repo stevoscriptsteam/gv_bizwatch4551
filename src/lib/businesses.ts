@@ -1,7 +1,10 @@
 import { getDb } from "@/lib/cloudflare";
 import { generateId } from "@/lib/auth";
 import { normalizePhone } from "@/lib/phone";
-import type { Business, BusinessContact } from "@/lib/types";
+import type { Business, BusinessContact, ReferralSourceId } from "@/lib/types";
+import { REFERRAL_SOURCES } from "@/lib/types";
+
+const REFERRAL_SOURCE_IDS = new Set<string>(REFERRAL_SOURCES.map((item) => item.id));
 
 export function validateBusinessFields(input: {
   businessName: string;
@@ -24,6 +27,29 @@ export function validateBusinessFields(input: {
     return "Suburb is too long.";
   }
   return null;
+}
+
+function validateReferralSource(input: {
+  referralSource?: string;
+  referralOther?: string;
+}): { source: ReferralSourceId; other: string | null } | { error: string } {
+  const source = input.referralSource?.trim() ?? "";
+  if (!REFERRAL_SOURCE_IDS.has(source)) {
+    return { error: "Please tell us how you found out about BizWatch." };
+  }
+
+  if (source === "other") {
+    const other = input.referralOther?.trim() ?? "";
+    if (!other) {
+      return { error: "Please tell us where you heard about BizWatch." };
+    }
+    if (other.length > 200) {
+      return { error: "That answer is too long (max 200 characters)." };
+    }
+    return { source: "other", other };
+  }
+
+  return { source: source as ReferralSourceId, other: null };
 }
 
 export async function getBusinessByPhone(phone: string): Promise<Business | null> {
@@ -49,6 +75,9 @@ export async function registerBusiness(input: {
   phone: string;
   email: string;
   suburb?: string;
+  referralSource?: string;
+  referralOther?: string;
+  acceptedTerms?: boolean;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const phone = normalizePhone(input.phone);
   if (!phone) {
@@ -58,6 +87,18 @@ export async function registerBusiness(input: {
   const fieldError = validateBusinessFields(input);
   if (fieldError) {
     return { ok: false, error: fieldError };
+  }
+
+  if (!input.acceptedTerms) {
+    return {
+      ok: false,
+      error: "You must accept the Privacy Policy and Terms of Use to register.",
+    };
+  }
+
+  const referral = validateReferralSource(input);
+  if ("error" in referral) {
+    return { ok: false, error: referral.error };
   }
 
   const existing = await getBusinessByPhone(phone);
@@ -81,7 +122,9 @@ export async function registerBusiness(input: {
   try {
     await db
       .prepare(
-        "INSERT INTO businesses (id, business_name, phone, email, suburb, active) VALUES (?, ?, ?, ?, ?, 0)",
+        `INSERT INTO businesses
+          (id, business_name, phone, email, suburb, referral_source, referral_other, terms_accepted_at, active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), 0)`,
       )
       .bind(
         id,
@@ -89,6 +132,8 @@ export async function registerBusiness(input: {
         phone,
         input.email.trim().toLowerCase(),
         input.suburb?.trim() || null,
+        referral.source,
+        referral.other,
       )
       .run();
   } catch {

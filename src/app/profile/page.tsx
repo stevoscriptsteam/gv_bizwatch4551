@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProfileForm } from "@/components/ProfileForm";
-import { TeamMembersCard } from "@/components/TeamMembersCard";
 import { NotificationPrefsCard } from "@/components/NotificationPrefsCard";
-import { isAdmin } from "@/lib/admin";
-import { MAX_TEAM_MEMBERS, listMembers } from "@/lib/members";
 import { getNotificationPrefs } from "@/lib/notifications";
 import { getCurrentBusiness } from "@/lib/session";
 
@@ -15,10 +13,7 @@ export default async function ProfilePage() {
   }
 
   const isOwner = !business.member_id;
-  const [members, notificationPrefs] = await Promise.all([
-    isOwner ? listMembers(business.id) : Promise.resolve([]),
-    getNotificationPrefs(business.id),
-  ]);
+  const notificationPrefs = await getNotificationPrefs(business.id);
 
   return (
     <div className="container-content">
@@ -46,17 +41,12 @@ export default async function ProfilePage() {
         />
 
         {isOwner ? (
-          <TeamMembersCard
-            businessName={business.business_name}
-            initialMembers={members.map(({ id, name, phone, is_admin }) => ({
-              id,
-              name,
-              phone,
-              is_admin,
-            }))}
-            maxMembers={MAX_TEAM_MEMBERS}
-            canGrantAdmin={isAdmin(business)}
-          />
+          <p className="supporting-text">
+            Want to give staff their own sign-in?{" "}
+            <Link href="/team" className="font-semibold text-navy-800 hover:underline">
+              Manage team
+            </Link>
+          </p>
         ) : null}
       </div>
     </div>

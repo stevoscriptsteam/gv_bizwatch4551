@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaIcon } from "@/components/FaIcon";
 import { faUser } from "@/lib/icons";
-import { faChevronDown, faFileLines, faPenToSquare, faRightFromBracket, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faFileLines, faNewspaper, faPenToSquare, faRightFromBracket, faShieldHalved, faUsers } from "@fortawesome/free-solid-svg-icons";
+import { UpdatesMenuLink } from "@/components/UpdatesMenuLink";
 
 export function ProfileMenu({
   businessName,
@@ -20,6 +21,7 @@ export function ProfileMenu({
   const dropdownLabel = memberName
     ? `${memberName} (${businessName})`
     : businessName;
+  const isOwner = !memberName;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +83,11 @@ export function ProfileMenu({
             <FaIcon icon={faFileLines} className="profile-menu-item-icon" aria-hidden />
             Your reports
           </Link>
+          <UpdatesMenuLink
+            icon={faNewspaper}
+            role="menuitem"
+            onNavigate={() => setOpen(false)}
+          />
           <Link
             href="/profile"
             className="profile-menu-item"
@@ -90,6 +97,17 @@ export function ProfileMenu({
             <FaIcon icon={faPenToSquare} className="profile-menu-item-icon" aria-hidden />
             Edit profile
           </Link>
+          {isOwner ? (
+            <Link
+              href="/team"
+              className="profile-menu-item"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+            >
+              <FaIcon icon={faUsers} className="profile-menu-item-icon" aria-hidden />
+              Manage team
+            </Link>
+          ) : null}
           {isAdmin ? (
             <Link
               href="/admin"

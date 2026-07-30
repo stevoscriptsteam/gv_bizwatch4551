@@ -1,13 +1,14 @@
 "use client";
 
 import type { Crime } from "@/lib/types";
-import { formatReferenceNumber } from "@/lib/types";
+import { formatReferenceNumber, formatReporterLabel } from "@/lib/types";
 import { FaIcon } from "@/components/FaIcon";
 import { INCIDENT_COLORS, INCIDENT_ICONS } from "@/lib/icons";
 import { getCategoryId } from "@/lib/incident-icons";
 import { ReportLocationPreview } from "@/components/ReportLocationPreview";
 import { ReportEngagement } from "@/components/ReportEngagement";
 import { ReportOwnerActions } from "@/components/ReportOwnerActions";
+import { ReportFlagControls } from "@/components/ReportFlagControls";
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("en-AU", {
@@ -52,6 +53,7 @@ export function ReportFeedCard({
   const locationLine = crime.suburb ? `${address}, ${crime.suburb}` : address;
   const amended =
     crime.updated_at && crime.updated_at !== crime.created_at;
+  const reporter = formatReporterLabel(crime);
 
   return (
     <article
@@ -68,6 +70,7 @@ export function ReportFeedCard({
         </span>
         <div className="report-feed-card-meta">
           <p className="report-feed-card-category">{crime.crime_type}</p>
+          <p className="report-feed-card-reporter">{reporter}</p>
           <p className="report-feed-card-time">
             {formatRelativeTime(crime.created_at)}
             {amended ? " · Edited" : ""}
@@ -82,6 +85,14 @@ export function ReportFeedCard({
       <p className="report-feed-card-location">{locationLine}</p>
 
       <ReportLocationPreview crime={crime} markerColor={color} />
+
+      {onUpdate && onDelete ? (
+        <ReportFlagControls
+          crime={crime}
+          onUpdate={onUpdate}
+          onArchived={onDelete}
+        />
+      ) : null}
 
       <ReportEngagement
         crime={crime}

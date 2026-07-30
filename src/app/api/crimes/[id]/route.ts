@@ -22,9 +22,8 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const [enriched] = await enrichCrimesWithEngagement([crime], business.id);
-  const { business_name: _removed, ...publicCrime } = enriched;
 
-  return NextResponse.json({ crime: publicCrime });
+  return NextResponse.json({ crime: enriched });
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
