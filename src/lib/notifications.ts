@@ -145,3 +145,67 @@ export async function sendCrimeAlertSmsFanout(input: {
     console.error(`SMS alert fan-out: ${failed}/${phones.length} sends failed.`);
   }
 }
+
+/**
+ * Notifies every admin business owner and their active staff when a new
+ * registration request is submitted, so they can review it in Admin → Requests.
+ */
+export async function sendRegistrationRequestSmsFanout(input: {
+  businessName: string;
+  suburb?: string | null;
+}): Promise<void> {
+  const db = await getDb();
+
+  const [ownersRes, staffRes] = await db.batch<{ phone: string }>([
+    db.prepare(
+      `SELECT phone FROM businesses
+       WHERE active = 1 AND is_admin = 1 AND phone IS NOT NULL AND TRIM(phone) != ''`,
+    ),
+    db.prepare(
+      `SELECT m.phone
+       FROM business_members m
+       JOIN businesses b ON b.id = m.business_id
+       WHERE b.active = 1 AND b.is_admin = 1
+         AND m.active = 1
+         AND m.phone IS NOT NULL AND TRIM(m.phone) != ''`,
+    ),
+  ]);
+
+  const phones = [
+    ...new Set(
+      [...(ownersRes.results ?? []), ...(staffRes.results ?? [])]
+        .map((row) => row.phone)
+        .filter(Boolean),
+    ),
+  ];
+
+  if (phones.length === 0) return;
+
+  const env = await getEnv();
+  const name = input.businessName
+    .replace(/[\r\n\t\v\f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+  const suburb = (input.suburb ?? "")
+    .replace(/[\r\n\t\v\f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
+  const place = suburb ? ` (${suburb})` : "";
+  const link = env.APP_URL ? ` Review: ${env.APP_URL}/admin` : "";
+  const body = `BizWatch 4551: New registration request from ${name || "a business"}${place}.${link}`;
+
+  const results = await Promise.allSettled(
+    phones.map((phone) => sendSms(phone, body)),
+  );
+
+  const failed = results.filter(
+    (r) => r.status === "rejected" || !r.value.ok,
+  ).length;
+  if (failed > 0) {
+    console.error(
+      `Registration request SMS fan-out: ${failed}/${phones.length} sends failed.`,
+    );
+  }
+}

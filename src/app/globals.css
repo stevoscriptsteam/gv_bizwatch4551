@@ -1578,12 +1578,86 @@ body.mobile-nav-open {
   top: calc(100% + 8px);
   right: 0;
   z-index: 50;
-  min-width: 220px;
+  min-width: 240px;
+  max-width: min(280px, calc(100vw - 24px));
   padding: 8px;
   border: 1px solid var(--grey-200);
   border-radius: var(--radius-md);
   background: var(--white);
   box-shadow: 0 8px 24px rgba(11, 53, 88, 0.12);
+}
+
+.invite-share {
+  margin: 6px 0 4px;
+  padding: 12px 10px 10px;
+  border-top: 1px solid var(--grey-200);
+  text-align: center;
+}
+
+.invite-share--compact {
+  margin-top: 12px;
+  padding: 14px 12px;
+  border: 1px solid var(--grey-200);
+  border-radius: var(--radius-md);
+  background: var(--grey-50);
+}
+
+.invite-share-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--grey-500);
+}
+
+.invite-share-qr {
+  display: inline-flex;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--white);
+  border: 1px solid var(--grey-200);
+}
+
+.invite-share-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--grey-500);
+}
+
+.invite-share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--navy-800);
+  border-radius: var(--radius-sm);
+  background: var(--navy-900);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invite-share-btn:hover {
+  background: var(--navy-800);
+}
+
+.invite-share-btn-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.invite-share-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--teal-700);
 }
 
 .profile-menu-dropdown-label {
@@ -3450,4 +3524,249 @@ textarea.input-field {
 .mobile-tab-primary-circle svg {
   width: 16px;
   height: 16px;
+}
+
+/* Invite landing page */
+body:has(.invite-page) {
+  background: var(--navy-950);
+}
+
+body:has(.invite-page) .site-main {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.invite-page {
+  min-height: calc(100dvh - 72px);
+}
+
+.invite-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: inherit;
+  padding: 72px 24px 88px;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 120%, rgba(8, 43, 76, 0.45) 0%, transparent 55%),
+    linear-gradient(165deg, #061f38 0%, var(--navy-950) 42%, #0a2f4f 100%);
+  color: var(--white);
+}
+
+.invite-lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.invite-light {
+  position: absolute;
+  top: -24%;
+  width: 80%;
+  height: 100%;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.58;
+  mix-blend-mode: screen;
+}
+
+.invite-light--red {
+  left: -30%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 70, 55, 0.95) 0%,
+    rgba(220, 50, 45, 0.45) 40%,
+    transparent 72%
+  );
+  animation: invite-pulse-red 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.invite-light--blue {
+  right: -30%;
+  background: radial-gradient(
+    circle,
+    rgba(70, 145, 255, 0.95) 0%,
+    rgba(40, 110, 220, 0.45) 40%,
+    transparent 72%
+  );
+  animation: invite-pulse-blue 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.invite-light-beam {
+  position: absolute;
+  top: 0;
+  width: 48%;
+  height: 100%;
+  opacity: 0.32;
+  transform-origin: top center;
+  filter: blur(28px);
+}
+
+.invite-light-beam--red {
+  left: -4%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 85, 65, 0.7) 0%,
+    rgba(231, 91, 69, 0.28) 40%,
+    transparent 78%
+  );
+  animation: invite-sweep-red 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.invite-light-beam--blue {
+  right: -4%;
+  background: linear-gradient(
+    180deg,
+    rgba(90, 155, 255, 0.7) 0%,
+    rgba(70, 140, 230, 0.28) 40%,
+    transparent 78%
+  );
+  animation: invite-sweep-blue 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.invite-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+.invite-brand {
+  margin: 0;
+  font-family: var(--font-invite-display), var(--font-sans);
+  font-size: clamp(2.75rem, 10vw, 5rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--white);
+  animation: invite-rise 0.8s ease-out both;
+}
+
+.invite-title {
+  margin: 22px 0 0;
+  font-family: var(--font-invite-display), var(--font-sans);
+  font-size: clamp(1.5rem, 4.5vw, 2.35rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: #e8eef5;
+  animation: invite-rise 0.8s ease-out 0.12s both;
+}
+
+.invite-lead {
+  margin: 16px auto 0;
+  max-width: 34rem;
+  font-family: var(--font-invite-body), var(--font-sans);
+  font-size: clamp(1.05rem, 2.4vw, 1.2rem);
+  line-height: 1.55;
+  color: rgba(232, 238, 245, 0.82);
+  animation: invite-rise 0.8s ease-out 0.24s both;
+}
+
+.invite-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 28px;
+  animation: invite-rise 0.8s ease-out 0.36s both;
+}
+
+.invite-cta {
+  min-height: 48px;
+  padding-inline: 28px;
+  font-family: var(--font-invite-body), var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.invite-signin {
+  font-family: var(--font-invite-body), var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(232, 238, 245, 0.78);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.invite-signin:hover {
+  color: var(--white);
+}
+
+@keyframes invite-pulse-red {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(1); }
+  25% { opacity: 0.55; transform: translate3d(3%, 1.5%, 0) scale(1.03); }
+  50% { opacity: 0.78; transform: translate3d(6%, 3%, 0) scale(1.06); }
+  75% { opacity: 0.35; transform: translate3d(3%, 1.5%, 0) scale(1.03); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes invite-pulse-blue {
+  0% { opacity: 0.78; transform: translate3d(0, 0, 0) scale(1.06); }
+  25% { opacity: 0.35; transform: translate3d(-3%, 1.5%, 0) scale(1.03); }
+  50% { opacity: 0; transform: translate3d(-6%, 3%, 0) scale(1); }
+  75% { opacity: 0.55; transform: translate3d(-3%, 1.5%, 0) scale(1.03); }
+  100% { opacity: 0.78; transform: translate3d(0, 0, 0) scale(1.06); }
+}
+
+@keyframes invite-sweep-red {
+  0% { opacity: 0; transform: skewX(-6deg); }
+  25% { opacity: 0.3; transform: skewX(-1.5deg); }
+  50% { opacity: 0.48; transform: skewX(3deg); }
+  75% { opacity: 0.22; transform: skewX(-1.5deg); }
+  100% { opacity: 0; transform: skewX(-6deg); }
+}
+
+@keyframes invite-sweep-blue {
+  0% { opacity: 0.48; transform: skewX(6deg); }
+  25% { opacity: 0.22; transform: skewX(1.5deg); }
+  50% { opacity: 0; transform: skewX(-3deg); }
+  75% { opacity: 0.3; transform: skewX(1.5deg); }
+  100% { opacity: 0.48; transform: skewX(6deg); }
+}
+
+@keyframes invite-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 639px) {
+  .invite-hero {
+    padding: 56px 20px 64px;
+    align-items: flex-start;
+    padding-top: 72px;
+  }
+
+  .invite-cta {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-light,
+  .invite-light-beam,
+  .invite-brand,
+  .invite-title,
+  .invite-lead,
+  .invite-actions {
+    animation: none !important;
+  }
+
+  .invite-light--red,
+  .invite-light--blue {
+    opacity: 0.5;
+  }
 }

@@ -7,6 +7,7 @@ import { FaIcon } from "@/components/FaIcon";
 import { faUser } from "@/lib/icons";
 import { faChevronDown, faFileLines, faNewspaper, faPenToSquare, faRightFromBracket, faShieldHalved, faUsers } from "@fortawesome/free-solid-svg-icons";
 import { UpdatesMenuLink } from "@/components/UpdatesMenuLink";
+import { InviteSharePanel } from "@/components/InviteSharePanel";
 
 export function ProfileMenu({
   businessName,
@@ -119,6 +120,7 @@ export function ProfileMenu({
               Admin
             </Link>
           ) : null}
+          <InviteSharePanel />
           <button
             type="button"
             className="profile-menu-item profile-menu-item--danger"

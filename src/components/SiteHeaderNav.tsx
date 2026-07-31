@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { UpdatesMenuLink } from "@/components/UpdatesMenuLink";
+import { InviteSharePanel } from "@/components/InviteSharePanel";
 
 type NavLink = { href: string; label: string };
 
@@ -184,6 +185,7 @@ export function SiteHeaderNav({
                   Admin
                 </Link>
               ) : null}
+              <InviteSharePanel compact />
               <button
                 type="button"
                 className="site-header-drawer-link site-header-drawer-link--danger"

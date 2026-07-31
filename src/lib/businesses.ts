@@ -1,8 +1,9 @@
-import { getDb } from "@/lib/cloudflare";
+import { getDb, runInBackground } from "@/lib/cloudflare";
 import { generateId } from "@/lib/auth";
 import { normalizePhone } from "@/lib/phone";
 import type { Business, BusinessContact, ReferralSourceId } from "@/lib/types";
 import { REFERRAL_SOURCES } from "@/lib/types";
+import { sendRegistrationRequestSmsFanout } from "@/lib/notifications";
 
 const REFERRAL_SOURCE_IDS = new Set<string>(REFERRAL_SOURCES.map((item) => item.id));
 
@@ -142,6 +143,15 @@ export async function registerBusiness(input: {
       error: "Could not submit registration. Please try again or contact us.",
     };
   }
+
+  const businessName = input.businessName.trim();
+  const suburb = input.suburb?.trim() || null;
+  await runInBackground(() =>
+    sendRegistrationRequestSmsFanout({
+      businessName,
+      suburb,
+    }),
+  );
 
   return { ok: true };
 }
